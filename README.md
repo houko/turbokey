@@ -11,6 +11,11 @@ is held briefly so poll-based games reliably sample it.
 > Windows only. Built with Go + [lxn/walk](https://github.com/lxn/walk) (native
 > Win32 controls), single self-contained executable, no runtime to install.
 
+## Download
+
+Grab the latest `turbokey.exe` from the [Releases](../../releases) page. Every push
+to `main` auto-builds and publishes a new versioned release via GitHub Actions.
+
 ## Features
 
 - Per-rule **trigger key**, **output key** (defaults to the trigger), **mode**,
