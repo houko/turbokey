@@ -14,7 +14,7 @@ cd "$(dirname "$0")"
 # main package directory so the linker picks it up. rsrc is a host-native tool.
 if [ ! -f cmd/turbokey/rsrc_windows_amd64.syso ]; then
   go install github.com/akavel/rsrc@latest
-  rsrc -manifest cmd/turbokey/app.manifest -arch amd64 -o cmd/turbokey/rsrc_windows_amd64.syso
+  rsrc -manifest cmd/turbokey/app.manifest -ico cmd/turbokey/icon.ico -arch amd64 -o cmd/turbokey/rsrc_windows_amd64.syso
 fi
 
 # Resolve dependencies as seen by the Windows build.

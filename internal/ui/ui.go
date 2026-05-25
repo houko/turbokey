@@ -4,6 +4,10 @@
 package ui
 
 import (
+	"bytes"
+	_ "embed"
+	"image"
+	_ "image/png"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -19,6 +23,28 @@ import (
 	"turbokey/internal/keys"
 	"turbokey/internal/winput"
 )
+
+//go:embed icon.png
+var iconPNG []byte
+
+var cachedIcon *walk.Icon
+
+// appIcon returns the embedded app icon, falling back to the stock icon on error.
+func appIcon() walk.Image {
+	if cachedIcon != nil {
+		return cachedIcon
+	}
+	img, _, err := image.Decode(bytes.NewReader(iconPNG))
+	if err != nil {
+		return walk.IconApplication()
+	}
+	ic, err := walk.NewIconFromImage(img)
+	if err != nil {
+		return walk.IconApplication()
+	}
+	cachedIcon = ic
+	return ic
+}
 
 // ruleModel adapts the rule slice to a walk TableView.
 type ruleModel struct {
@@ -369,7 +395,7 @@ func (mw *mainWindow) setupTray() {
 		return
 	}
 	mw.ni = ni
-	ni.SetIcon(walk.IconApplication())
+	ni.SetIcon(appIcon())
 	ni.SetToolTip(i18n.T("tray.tooltip"))
 
 	showAct := walk.NewAction()
@@ -498,7 +524,7 @@ func Run(eng *engine.Engine, cfg *config.File) error {
 	mw.langReady = true // enable the language handler only after the initial value
 	mw.leTargets.SetText(strings.Join(mw.targets, ", "))
 
-	mw.SetIcon(walk.IconApplication())
+	mw.SetIcon(appIcon())
 
 	// Reflect master changes made via the global F8 hotkey.
 	eng.OnMasterChange = func(on bool) {
