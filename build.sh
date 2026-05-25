@@ -1,0 +1,29 @@
+#!/usr/bin/env bash
+# Cross-compile the Windows GUI executable from Linux/WSL. No CGO required.
+set -euo pipefail
+
+export PATH="$HOME/.local/go/bin:$HOME/go/bin:$PATH"
+export GOPROXY="${GOPROXY:-https://goproxy.cn,direct}"
+
+cd "$(dirname "$0")"
+
+# Module init (idempotent).
+[ -f go.mod ] || go mod init turbokey
+
+# Embed the application manifest as a Windows resource object.
+# rsrc is a host-native tool, so it must build/run for the host platform.
+if [ ! -f rsrc_windows_amd64.syso ]; then
+  go install github.com/akavel/rsrc@latest
+  rsrc -manifest app.manifest -arch amd64 -o rsrc_windows_amd64.syso
+fi
+
+# Resolve dependencies as seen by the Windows build.
+GOOS=windows GOARCH=amd64 go mod tidy
+
+# Build the GUI exe (-H windowsgui hides the console window).
+GOOS=windows GOARCH=amd64 CGO_ENABLED=0 \
+  go build -trimpath -ldflags "-H windowsgui -s -w" -o turbokey.exe .
+
+echo "--- built ---"
+ls -lh turbokey.exe
+file turbokey.exe 2>/dev/null || true

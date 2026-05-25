@@ -1,0 +1,6 @@
+{
+  "rules": [
+    { "name": "attack", "trigger": "J", "output": "", "mode": "hold", "interval": 10, "enabled": true },
+    { "name": "skill", "trigger": "K", "output": "", "mode": "toggle", "interval": 50, "enabled": false }
+  ]
+}
