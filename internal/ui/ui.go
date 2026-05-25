@@ -64,7 +64,12 @@ type mainWindow struct {
 	cbMode     *walk.ComboBox
 	neInterval *walk.NumberEdit
 
+	ni         *walk.NotifyIcon // system tray icon; nil if tray setup failed
+	trayMaster *walk.Action     // checkable master toggle in the tray menu
+
 	applyingMaster int32 // guard: suppress checkbox handler during programmatic updates
+	exiting        bool  // true once the user chose Exit, so close is not redirected to tray
+	toldTray       bool  // whether the "minimized to tray" balloon was already shown
 }
 
 func copyRules(in []*config.Rule) []*config.Rule {
@@ -91,13 +96,30 @@ func (mw *mainWindow) updateStatus(on bool) {
 	}
 }
 
+// applyMaster sets the engine master state and reflects it across all controls.
+func (mw *mainWindow) applyMaster(on bool) {
+	mw.eng.SetMaster(on)
+	mw.syncMasterUI(on)
+}
+
+// syncMasterUI reflects the master state on the checkbox, tray action, and status
+// label without re-entering the engine. The guard suppresses the checkbox's own
+// change handler while it is set programmatically.
+func (mw *mainWindow) syncMasterUI(on bool) {
+	atomic.StoreInt32(&mw.applyingMaster, 1)
+	mw.cbMaster.SetChecked(on)
+	if mw.trayMaster != nil {
+		mw.trayMaster.SetChecked(on)
+	}
+	atomic.StoreInt32(&mw.applyingMaster, 0)
+	mw.updateStatus(on)
+}
+
 func (mw *mainWindow) onMasterToggled() {
 	if atomic.LoadInt32(&mw.applyingMaster) == 1 {
 		return
 	}
-	on := mw.cbMaster.Checked()
-	mw.eng.SetMaster(on)
-	mw.updateStatus(on)
+	mw.applyMaster(mw.cbMaster.Checked())
 }
 
 func (mw *mainWindow) onAdd() {
@@ -149,6 +171,67 @@ func (mw *mainWindow) onToggleEnabled() {
 	mw.apply()
 }
 
+// restore shows and activates the main window (e.g. from the tray).
+func (mw *mainWindow) restore() {
+	mw.Show()
+	mw.Activate()
+}
+
+// hideToTray hides the window, keeping the app running in the tray.
+func (mw *mainWindow) hideToTray() {
+	mw.Hide()
+	if !mw.toldTray && mw.ni != nil {
+		mw.toldTray = true
+		mw.ni.ShowInfo("TurboKey", "已最小化到系统托盘。右键托盘图标可退出。")
+	}
+}
+
+// exit quits the application for real (the tray menu's Exit).
+func (mw *mainWindow) exit() {
+	mw.exiting = true
+	if mw.ni != nil {
+		mw.ni.Dispose()
+	}
+	mw.Close()
+}
+
+// setupTray installs the system-tray icon and its context menu. On failure the
+// app simply runs without a tray (mw.ni stays nil).
+func (mw *mainWindow) setupTray() {
+	ni, err := walk.NewNotifyIcon(mw.MainWindow)
+	if err != nil {
+		return
+	}
+	mw.ni = ni
+	ni.SetIcon(walk.IconApplication())
+	ni.SetToolTip("TurboKey 按键连发")
+
+	showAct := walk.NewAction()
+	showAct.SetText("显示主界面")
+	showAct.Triggered().Attach(mw.restore)
+	ni.ContextMenu().Actions().Add(showAct)
+
+	mw.trayMaster = walk.NewAction()
+	mw.trayMaster.SetText("启用连发 (F8)")
+	mw.trayMaster.SetCheckable(true)
+	mw.trayMaster.Triggered().Attach(func() { mw.applyMaster(mw.trayMaster.Checked()) })
+	ni.ContextMenu().Actions().Add(mw.trayMaster)
+
+	exitAct := walk.NewAction()
+	exitAct.SetText("退出")
+	exitAct.Triggered().Attach(mw.exit)
+	ni.ContextMenu().Actions().Add(exitAct)
+
+	// Left-click the tray icon to bring the window back.
+	ni.MouseDown().Attach(func(x, y int, button walk.MouseButton) {
+		if button == walk.LeftButton {
+			mw.restore()
+		}
+	})
+
+	ni.SetVisible(true)
+}
+
 // Run builds the window, wires it to the engine, starts the hook, and runs the
 // GUI message loop until the window closes.
 func Run(eng *engine.Engine, initialRules []*config.Rule) error {
@@ -175,7 +258,7 @@ func Run(eng *engine.Engine, initialRules []*config.Rule) error {
 					HSpacer{},
 				},
 			},
-			Label{Text: "提示: 本工具以管理员权限运行(向游戏注入按键所需)。总开关开启后, 配置的键在所有程序中都会被连发拦截; 不用时按 F8 关闭。"},
+			Label{Text: "提示: 本工具以管理员权限运行(向游戏注入按键所需)。总开关开启后配置的键在所有程序中都会被连发拦截, 不用时按 F8 关闭。关闭窗口会最小化到系统托盘, 退出请用托盘右键菜单。"},
 			TableView{
 				AssignTo: &mw.tv,
 				Columns: []TableViewColumn{
@@ -227,14 +310,22 @@ func Run(eng *engine.Engine, initialRules []*config.Rule) error {
 	mw.cbOutput.SetCurrentIndex(0)
 	mw.cbMode.SetCurrentIndex(0)
 
+	mw.SetIcon(walk.IconApplication())
+
+	// Reflect master changes made via the global F8 hotkey.
 	eng.OnMasterChange = func(on bool) {
-		mw.Synchronize(func() {
-			atomic.StoreInt32(&mw.applyingMaster, 1)
-			mw.cbMaster.SetChecked(on)
-			atomic.StoreInt32(&mw.applyingMaster, 0)
-			mw.updateStatus(on)
-		})
+		mw.Synchronize(func() { mw.syncMasterUI(on) })
 	}
+
+	// System tray: closing the window hides it there instead of quitting; Exit is
+	// available from the tray menu.
+	mw.setupTray()
+	mw.Closing().Attach(func(canceled *bool, reason walk.CloseReason) {
+		if mw.ni != nil && !mw.exiting {
+			*canceled = true
+			mw.hideToTray()
+		}
+	})
 
 	eng.SetRules(copyRules(initialRules))
 	eng.Start()

@@ -19,6 +19,9 @@ is held briefly so poll-based games reliably sample it.
   - **Hold** — repeats while the trigger key is physically held down.
   - **Toggle** — one press starts repeating, the next press stops.
 - Global master switch with an **F8** hotkey.
+- **System tray**: closing the window minimizes to the tray (the tool keeps
+  running). Left-click the tray icon to restore it; right-click for a menu to
+  show the window, toggle the master switch, or quit.
 - Rules are saved to `config.json` next to the executable and reloaded on start.
 - The tool filters out its own synthetic input, so it never re-triggers itself.
 
