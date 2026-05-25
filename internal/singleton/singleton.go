@@ -1,0 +1,44 @@
+//go:build windows
+
+// Package singleton ensures only one TurboKey process runs at a time, so
+// double-launching can't end up with two hooks fighting over the same input.
+package singleton
+
+import (
+	"syscall"
+
+	"golang.org/x/sys/windows"
+
+	"turbokey/internal/winput"
+)
+
+const mutexName = `Local\TurboKey-SingleInstance`
+
+// keep the handle alive for the lifetime of the process so the named mutex
+// stays owned (Windows releases it on process death).
+//
+//lint:ignore U1000 written-only by design; the kept reference prevents the
+// handle from being closed before the process exits.
+var heldMutex windows.Handle
+
+// Acquire returns true if this is the first instance. If another instance
+// already holds the mutex it best-effort brings its window to the front and
+// returns false (the caller should exit).
+func Acquire() bool {
+	name, _ := syscall.UTF16PtrFromString(mutexName)
+	h, err := windows.CreateMutex(nil, false, name)
+	if err == windows.ERROR_ALREADY_EXISTS {
+		if h != 0 {
+			windows.CloseHandle(h)
+		}
+		winput.SurfaceFirstByExe("turbokey.exe", windows.GetCurrentProcessId())
+		return false
+	}
+	if err != nil {
+		// Couldn't create the mutex at all (e.g. permissions); fail open so the
+		// app still launches rather than refusing to start.
+		return true
+	}
+	heldMutex = h
+	return true
+}

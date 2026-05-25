@@ -29,23 +29,47 @@ import (
 //go:embed icon.png
 var iconPNG []byte
 
-var cachedIcon *walk.Icon
+//go:embed icon_on.png
+var iconOnPNG []byte
 
-// appIcon returns the embedded app icon, falling back to the stock icon on error.
+var cachedIcon, cachedIconOn *walk.Icon
+
+func decodeIcon(data []byte) *walk.Icon {
+	img, _, err := image.Decode(bytes.NewReader(data))
+	if err != nil {
+		return nil
+	}
+	ic, err := walk.NewIconFromImageForDPI(img, 96)
+	if err != nil {
+		return nil
+	}
+	return ic
+}
+
+// appIcon returns the embedded "off" app icon (white bolt), used for the window
+// and as the default tray icon. Falls back to the stock icon on error.
 func appIcon() walk.Image {
 	if cachedIcon != nil {
 		return cachedIcon
 	}
-	img, _, err := image.Decode(bytes.NewReader(iconPNG))
-	if err != nil {
-		return walk.IconApplication()
+	if ic := decodeIcon(iconPNG); ic != nil {
+		cachedIcon = ic
+		return ic
 	}
-	ic, err := walk.NewIconFromImage(img)
-	if err != nil {
-		return walk.IconApplication()
+	return walk.IconApplication()
+}
+
+// appIconOn returns the embedded "on" tray icon (yellow bolt) shown while the
+// master switch is enabled.
+func appIconOn() walk.Image {
+	if cachedIconOn != nil {
+		return cachedIconOn
 	}
-	cachedIcon = ic
-	return ic
+	if ic := decodeIcon(iconOnPNG); ic != nil {
+		cachedIconOn = ic
+		return ic
+	}
+	return appIcon()
 }
 
 // ruleModel adapts the rule slice to a walk TableView.
@@ -91,6 +115,7 @@ type mainWindow struct {
 
 	tv          *walk.TableView
 	cbMaster    *walk.CheckBox
+	cbHotkey    *walk.ComboBox
 	cbAutostart *walk.CheckBox
 	lblStatus   *walk.Label
 	cbLang      *walk.ComboBox
@@ -106,7 +131,9 @@ type mainWindow struct {
 
 	lang           string   // selected language code: "" (auto) | "zh" | "en"
 	targets        []string // process exe names the tool acts in (empty = all)
+	hotkey         uint16   // master-switch hotkey vk (e.g. 0x77 = F8)
 	langReady      bool     // true once the language combo's initial value is set
+	hotkeyReady    bool     // true once the hotkey combo's initial value is set
 	autostartReady bool     // true once the autostart checkbox's initial value is set
 	applyingMaster int32  // guard: suppress checkbox handler during programmatic updates
 	exiting        bool   // true once the user chose Exit, so close is not redirected to tray
@@ -124,7 +151,43 @@ func copyRules(in []*config.Rule) []*config.Rule {
 
 // save writes the full current configuration to disk.
 func (mw *mainWindow) save() {
-	config.Save(&config.File{Lang: mw.lang, Targets: mw.targets, Rules: mw.model.rules})
+	config.Save(&config.File{
+		Lang:         mw.lang,
+		MasterHotkey: keys.Name(mw.hotkey),
+		Targets:      mw.targets,
+		Rules:        mw.model.rules,
+	})
+}
+
+// masterLabel composes the master checkbox / tray-menu text, appending the
+// currently bound hotkey in parentheses.
+func (mw *mainWindow) masterLabel(base string) string {
+	return base + " (" + keys.Name(mw.hotkey) + ")"
+}
+
+// refreshMasterLabel updates the master checkbox and tray-menu text to reflect
+// the current hotkey (used after the user changes it).
+func (mw *mainWindow) refreshMasterLabel() {
+	mw.cbMaster.SetText(mw.masterLabel(i18n.T("master")))
+	if mw.trayMaster != nil {
+		mw.trayMaster.SetText(mw.masterLabel(i18n.T("tray.master")))
+	}
+}
+
+// onHotkeyChanged is fired when the user picks a different master hotkey.
+func (mw *mainWindow) onHotkeyChanged() {
+	if !mw.hotkeyReady {
+		return
+	}
+	name := mw.cbHotkey.Text()
+	vk, ok := keys.VK(name)
+	if !ok || vk == mw.hotkey {
+		return
+	}
+	mw.hotkey = vk
+	mw.eng.SetMasterHotkey(vk)
+	mw.refreshMasterLabel()
+	mw.save()
 }
 
 // apply pushes the current rules into the engine (as independent copies) and
@@ -266,6 +329,13 @@ func (mw *mainWindow) syncMasterUI(on bool) {
 	}
 	atomic.StoreInt32(&mw.applyingMaster, 0)
 	mw.updateStatus(on)
+	if mw.ni != nil {
+		if on {
+			mw.ni.SetIcon(appIconOn())
+		} else {
+			mw.ni.SetIcon(appIcon())
+		}
+	}
 }
 
 func (mw *mainWindow) onMasterToggled() {
@@ -474,7 +544,7 @@ func (mw *mainWindow) setupTray() {
 	ni.ContextMenu().Actions().Add(showAct)
 
 	mw.trayMaster = walk.NewAction()
-	mw.trayMaster.SetText(i18n.T("tray.master"))
+	mw.trayMaster.SetText(mw.masterLabel(i18n.T("tray.master")))
 	mw.trayMaster.SetCheckable(true)
 	mw.trayMaster.Triggered().Attach(func() { mw.applyMaster(mw.trayMaster.Checked()) })
 	ni.ContextMenu().Actions().Add(mw.trayMaster)
@@ -498,7 +568,13 @@ func (mw *mainWindow) setupTray() {
 // GUI message loop until the window closes.
 func Run(eng *engine.Engine, cfg *config.File) error {
 	model := &ruleModel{rules: cfg.Rules}
-	mw := &mainWindow{eng: eng, model: model, lang: cfg.Lang, targets: cfg.Targets}
+	hotkey := uint16(0x77) // VK_F8 default
+	if cfg.MasterHotkey != "" {
+		if vk, ok := keys.VK(cfg.MasterHotkey); ok {
+			hotkey = vk
+		}
+	}
+	mw := &mainWindow{eng: eng, model: model, lang: cfg.Lang, targets: cfg.Targets, hotkey: hotkey}
 
 	outputNames := append([]string{i18n.T("output.same")}, keys.Names...)
 
@@ -516,8 +592,14 @@ func Run(eng *engine.Engine, cfg *config.File) error {
 				Children: []Widget{
 					CheckBox{
 						AssignTo:         &mw.cbMaster,
-						Text:             i18n.T("master"),
+						Text:             mw.masterLabel(i18n.T("master")),
 						OnCheckedChanged: mw.onMasterToggled,
+					},
+					ComboBox{
+						AssignTo:              &mw.cbHotkey,
+						Model:                 keys.KeyboardNames,
+						OnCurrentIndexChanged: mw.onHotkeyChanged,
+						MinSize:               Size{Width: 70},
 					},
 					Label{AssignTo: &mw.lblStatus, Text: i18n.T("status.off")},
 					HSpacer{},
@@ -599,6 +681,14 @@ func Run(eng *engine.Engine, cfg *config.File) error {
 	mw.cbMode.SetCurrentIndex(0)
 	mw.cbLang.SetCurrentIndex(i18n.IndexOf(mw.lang))
 	mw.langReady = true // enable the language handler only after the initial value
+	if idx := keys.Index(mw.hotkey); idx >= 0 {
+		// keys.Index returns the position in Names; cbHotkey's model is
+		// KeyboardNames, which is Names minus the mouse buttons. For all
+		// keyboard keys the two slices share the same prefix order, so the
+		// index is the same. Mouse keys are excluded from the picker by design.
+		mw.cbHotkey.SetCurrentIndex(idx)
+	}
+	mw.hotkeyReady = true
 	mw.leTargets.SetText(strings.Join(mw.targets, ", "))
 	mw.cbAutostart.SetChecked(autostart.Enabled())
 	mw.autostartReady = true

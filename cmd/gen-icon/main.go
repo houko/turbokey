@@ -54,7 +54,7 @@ func inPoly(px, py float64, poly [][2]float64) bool {
 
 func lerp(a, b uint8, t float64) uint8 { return uint8(float64(a) + (float64(b)-float64(a))*t) }
 
-func renderMaster() *image.NRGBA {
+func renderMaster(bolt color.NRGBA) *image.NRGBA {
 	W := float64(master)
 	img := image.NewNRGBA(image.Rect(0, 0, master, master))
 	m, r := 96.0, 336.0
@@ -82,7 +82,7 @@ func renderMaster() *image.NRGBA {
 			}
 			c := color.NRGBA{lerp(tR, bR, t), lerp(tG, bG, t), lerp(tB, bB, t), 0xff}
 			if inPoly(px, py, poly) {
-				c = color.NRGBA{0xff, 0xff, 0xff, 0xff}
+				c = bolt
 			}
 			img.SetNRGBA(x, y, c)
 		}
@@ -157,18 +157,23 @@ func writeICO(path string, sizes []int, pngs map[int][]byte) {
 }
 
 func main() {
-	m := renderMaster()
+	white := color.NRGBA{0xff, 0xff, 0xff, 0xff}
+	yellow := color.NRGBA{0xfb, 0xbf, 0x24, 0xff} // brighter, "active" feel
+
+	mOff := renderMaster(white)
+	mOn := renderMaster(yellow)
+
 	sizes := []int{16, 32, 48, 256}
-	pngs := map[int][]byte{}
-	imgs := map[int]image.Image{}
+	pngsOff := map[int][]byte{}
 	for _, s := range sizes {
-		img := downscale(m, s)
-		imgs[s] = img
-		pngs[s] = pngBytes(img)
+		pngsOff[s] = pngBytes(downscale(mOff, s))
 	}
-	writeICO("cmd/turbokey/icon.ico", sizes, pngs)
-	if err := os.WriteFile("internal/ui/icon.png", pngs[256], 0644); err != nil {
+	writeICO("cmd/turbokey/icon.ico", sizes, pngsOff)
+	if err := os.WriteFile("internal/ui/icon.png", pngsOff[256], 0644); err != nil {
 		panic(err)
 	}
-	println("wrote cmd/turbokey/icon.ico and internal/ui/icon.png")
+	if err := os.WriteFile("internal/ui/icon_on.png", pngBytes(downscale(mOn, 256)), 0644); err != nil {
+		panic(err)
+	}
+	println("wrote icon.ico, icon.png, icon_on.png")
 }

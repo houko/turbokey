@@ -1,6 +1,6 @@
 {
   "app.title": "TurboKey · Disparo automático",
-  "master": "Interruptor (F8)",
+  "master": "Interruptor",
   "lbl.lang": "Idioma",
   "lang.auto": "Auto",
   "status.on": "Estado: ativo",
@@ -25,7 +25,7 @@
   "footer": "Duplo clique numa linha para alternar · fechar = bandeja",
   "tray.tooltip": "TurboKey",
   "tray.show": "Mostrar janela",
-  "tray.master": "Ativar (F8)",
+  "tray.master": "Ativar",
   "tray.exit": "Sair",
   "lbl.scope": "Apps ativos (vazio = todos)",
   "btn.capture": "Escolher app…",

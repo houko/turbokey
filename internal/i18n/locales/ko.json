@@ -1,6 +1,6 @@
 {
   "app.title": "TurboKey 연타 도구",
-  "master": "마스터 (F8)",
+  "master": "마스터",
   "lbl.lang": "언어",
   "lang.auto": "자동",
   "status.on": "상태: 실행 중",
@@ -25,7 +25,7 @@
   "footer": "행을 더블클릭하여 전환 · 닫기=트레이",
   "tray.tooltip": "TurboKey 연타 도구",
   "tray.show": "창 표시",
-  "tray.master": "연타 사용 (F8)",
+  "tray.master": "연타 사용",
   "tray.exit": "종료",
   "lbl.scope": "적용 앱 (비우면 전체)",
   "btn.capture": "앱 선택…",

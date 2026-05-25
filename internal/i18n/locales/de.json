@@ -1,6 +1,6 @@
 {
   "app.title": "TurboKey · Auto-Taste",
-  "master": "Hauptschalter (F8)",
+  "master": "Hauptschalter",
   "lbl.lang": "Sprache",
   "lang.auto": "Auto",
   "status.on": "Status: aktiv",
@@ -25,7 +25,7 @@
   "footer": "Zeile doppelklicken zum Umschalten · Schließen = Tray",
   "tray.tooltip": "TurboKey",
   "tray.show": "Fenster anzeigen",
-  "tray.master": "Aktivieren (F8)",
+  "tray.master": "Aktivieren",
   "tray.exit": "Beenden",
   "lbl.scope": "Aktive Apps (leer = alle)",
   "btn.capture": "App wählen…",

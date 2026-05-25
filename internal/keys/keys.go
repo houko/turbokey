@@ -19,6 +19,10 @@ type keyDef struct {
 // Names is the ordered list of display names shown in combo boxes.
 var Names []string
 
+// KeyboardNames is Names filtered to keyboard keys (no mouse buttons), for the
+// master-hotkey picker.
+var KeyboardNames []string
+
 // Mouse-button virtual-key codes (same values Windows uses for VK_*BUTTON).
 const (
 	VKMouseLeft   = 0x01
@@ -78,6 +82,9 @@ func init() {
 		vkToName[k.vk] = k.name
 		vkExtended[k.vk] = k.ext
 		vkMouse[k.vk] = k.mouse
+		if !k.mouse {
+			KeyboardNames = append(KeyboardNames, k.name)
+		}
 	}
 }
 

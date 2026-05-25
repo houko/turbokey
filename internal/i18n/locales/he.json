@@ -1,6 +1,6 @@
 {
   "app.title": "TurboKey · הקלקה אוטומטית",
-  "master": "מתג ראשי (F8)",
+  "master": "מתג ראשי",
   "lbl.lang": "שפה",
   "lang.auto": "אוטומטי",
   "status.on": "מצב: פועל",
@@ -25,7 +25,7 @@
   "footer": "לחיצה כפולה על שורה מחליפה · סגירה = מגש",
   "tray.tooltip": "TurboKey",
   "tray.show": "הצג חלון",
-  "tray.master": "הפעל הקלקה (F8)",
+  "tray.master": "הפעל הקלקה",
   "tray.exit": "יציאה",
   "lbl.scope": "אפליקציות פעילות (ריק = הכול)",
   "btn.capture": "בחר אפליקציה…",

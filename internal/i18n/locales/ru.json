@@ -1,6 +1,6 @@
 {
   "app.title": "TurboKey · Автонажатие",
-  "master": "Главный (F8)",
+  "master": "Главный",
   "lbl.lang": "Язык",
   "lang.auto": "Авто",
   "status.on": "Статус: работает",
@@ -25,7 +25,7 @@
   "footer": "Двойной щелчок по строке — переключить · закрытие — в трей",
   "tray.tooltip": "TurboKey",
   "tray.show": "Показать окно",
-  "tray.master": "Включить (F8)",
+  "tray.master": "Включить",
   "tray.exit": "Выход",
   "lbl.scope": "Активные прил. (пусто = все)",
   "btn.capture": "Выбрать прил.…",

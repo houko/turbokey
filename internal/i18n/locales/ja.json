@@ -1,6 +1,6 @@
 {
   "app.title": "TurboKey 連打ツール",
-  "master": "メイン (F8)",
+  "master": "メイン",
   "lbl.lang": "言語",
   "lang.auto": "自動",
   "status.on": "状態: 実行中",
@@ -25,7 +25,7 @@
   "footer": "行をダブルクリックで切替 · 閉じる=トレイ",
   "tray.tooltip": "TurboKey 連打ツール",
   "tray.show": "ウィンドウを表示",
-  "tray.master": "連打を有効 (F8)",
+  "tray.master": "連打を有効",
   "tray.exit": "終了",
   "lbl.scope": "対象アプリ (空=全部)",
   "btn.capture": "アプリを選択…",

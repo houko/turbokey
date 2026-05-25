@@ -1,6 +1,6 @@
 {
   "app.title": "TurboKey",
-  "master": "Master (F8)",
+  "master": "Master",
   "lbl.lang": "Lang",
   "lang.auto": "Auto",
   "status.on": "Status: running",
@@ -25,7 +25,7 @@
   "footer": "Double-click a row to toggle · close = tray",
   "tray.tooltip": "TurboKey",
   "tray.show": "Show window",
-  "tray.master": "Enable rapid-fire (F8)",
+  "tray.master": "Enable rapid-fire",
   "tray.exit": "Exit",
   "lbl.scope": "Active apps (blank = all)",
   "btn.capture": "Choose app…",

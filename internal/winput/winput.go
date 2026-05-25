@@ -158,7 +158,11 @@ var (
 	procGetWindowTextLengthW       = user32.NewProc("GetWindowTextLengthW")
 	procGetWindowLongPtrW          = user32.NewProc("GetWindowLongPtrW")
 	procSetWinEventHook            = user32.NewProc("SetWinEventHook")
+	procShowWindow                 = user32.NewProc("ShowWindow")
+	procSetForegroundWindow        = user32.NewProc("SetForegroundWindow")
 )
+
+const swRestore = 9
 
 const (
 	processQueryLimitedInformation = 0x1000
@@ -257,6 +261,53 @@ func enumProc(hwnd, _ uintptr) uintptr {
 	}
 	enumAcc = append(enumAcc, WindowInfo{Title: title, Exe: exe})
 	return 1
+}
+
+// One reusable surface callback (same constraint as enumCb).
+var (
+	surfaceMu      sync.Mutex
+	surfaceTarget  string
+	surfaceSelfPid uint32
+	surfaceFound   uintptr
+	surfaceCb      = windows.NewCallback(surfaceProc)
+)
+
+func surfaceProc(hwnd, _ uintptr) uintptr {
+	if surfaceFound != 0 {
+		return 0 // already found, stop enumerating
+	}
+	if r, _, _ := procIsWindowVisible.Call(hwnd); r == 0 {
+		return 1
+	}
+	if n, _, _ := procGetWindowTextLengthW.Call(hwnd); n == 0 {
+		return 1
+	}
+	var pid uint32
+	procGetWindowThreadProcessId.Call(hwnd, uintptr(unsafe.Pointer(&pid)))
+	if pid == 0 || pid == surfaceSelfPid {
+		return 1
+	}
+	if processExeName(pid) == surfaceTarget {
+		surfaceFound = hwnd
+		return 0
+	}
+	return 1
+}
+
+// SurfaceFirstByExe finds the first visible top-level window owned by a process
+// whose exe matches the given (lowercase) name (excluding selfPid), and brings
+// it to the foreground. Best-effort; silently no-ops if nothing matches.
+func SurfaceFirstByExe(exe string, selfPid uint32) {
+	surfaceMu.Lock()
+	defer surfaceMu.Unlock()
+	surfaceTarget = exe
+	surfaceSelfPid = selfPid
+	surfaceFound = 0
+	procEnumWindows.Call(surfaceCb, 0)
+	if surfaceFound != 0 {
+		procShowWindow.Call(surfaceFound, swRestore)
+		procSetForegroundWindow.Call(surfaceFound)
+	}
 }
 
 // VisibleWindows lists visible top-level windows that have a title, one entry per

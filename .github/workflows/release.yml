@@ -30,6 +30,10 @@ jobs:
       # unsafeptr is disabled: converting a hook's lParam (a foreign pointer
       # passed as uintptr) to a struct pointer is the standard, safe win32 idiom.
       - run: go vet -unsafeptr=false ./...
+      - name: staticcheck
+        run: |
+          go install honnef.co/go/tools/cmd/staticcheck@latest
+          staticcheck ./...
       - run: go test ./...
 
   release:

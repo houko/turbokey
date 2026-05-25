@@ -43,9 +43,10 @@ func (r *Rule) EffectiveOutputVK() uint16 {
 
 // File is the persisted configuration.
 type File struct {
-	Lang    string   // UI language code ("" = follow the OS)
-	Targets []string // process exe names the tool acts in (empty = all apps)
-	Rules   []*Rule
+	Lang         string   // UI language code ("" = follow the OS)
+	MasterHotkey string   // master-switch key name ("" = default F8)
+	Targets      []string // process exe names the tool acts in (empty = all apps)
+	Rules        []*Rule
 }
 
 // --- JSON serialization (human-readable, keyed by key name) ---
@@ -60,9 +61,10 @@ type ruleDTO struct {
 }
 
 type configDTO struct {
-	Lang    string    `json:"lang,omitempty"`
-	Targets []string  `json:"targets,omitempty"`
-	Rules   []ruleDTO `json:"rules"`
+	Lang         string    `json:"lang,omitempty"`
+	MasterHotkey string    `json:"masterHotkey,omitempty"`
+	Targets      []string  `json:"targets,omitempty"`
+	Rules        []ruleDTO `json:"rules"`
 }
 
 func path() string {
@@ -121,11 +123,11 @@ func loadFrom(p string) (*File, error) {
 			Enabled:    d.Enabled,
 		})
 	}
-	return &File{Lang: dto.Lang, Targets: dto.Targets, Rules: rules}, nil
+	return &File{Lang: dto.Lang, MasterHotkey: dto.MasterHotkey, Targets: dto.Targets, Rules: rules}, nil
 }
 
 func saveTo(p string, f *File) error {
-	dto := configDTO{Lang: f.Lang, Targets: f.Targets, Rules: make([]ruleDTO, 0, len(f.Rules))}
+	dto := configDTO{Lang: f.Lang, MasterHotkey: f.MasterHotkey, Targets: f.Targets, Rules: make([]ruleDTO, 0, len(f.Rules))}
 	for _, r := range f.Rules {
 		out := ""
 		if r.OutputVK != 0 {

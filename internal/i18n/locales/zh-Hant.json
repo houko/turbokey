@@ -1,6 +1,6 @@
 {
   "app.title": "TurboKey 按鍵連發",
-  "master": "總開關 (F8)",
+  "master": "總開關",
   "lbl.lang": "語言",
   "lang.auto": "自動",
   "status.on": "狀態: 執行中",
@@ -25,7 +25,7 @@
   "footer": "雙擊列可啟停 · 關閉視窗即最小化到系統匣",
   "tray.tooltip": "TurboKey 按鍵連發",
   "tray.show": "顯示主介面",
-  "tray.master": "啟用連發 (F8)",
+  "tray.master": "啟用連發",
   "tray.exit": "結束",
   "lbl.scope": "生效程式(空=全部)",
   "btn.capture": "選擇程式…",

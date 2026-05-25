@@ -101,6 +101,13 @@ func (e *Engine) SetRules(rules []*config.Rule) {
 	}
 }
 
+// SetMasterHotkey changes the hotkey used to toggle the master switch.
+func (e *Engine) SetMasterHotkey(vk uint16) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	e.masterHotkeyVK = vk
+}
+
 // SetMaster sets the master switch from the UI (no callback fired back).
 func (e *Engine) SetMaster(on bool) {
 	e.mu.Lock()

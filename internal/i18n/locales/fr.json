@@ -1,6 +1,6 @@
 {
   "app.title": "TurboKey · Frappe auto",
-  "master": "Activer (F8)",
+  "master": "Activer",
   "lbl.lang": "Langue",
   "lang.auto": "Auto",
   "status.on": "État : actif",
@@ -25,7 +25,7 @@
   "footer": "Double-clic sur une ligne pour basculer · fermer = barre",
   "tray.tooltip": "TurboKey",
   "tray.show": "Afficher la fenêtre",
-  "tray.master": "Activer (F8)",
+  "tray.master": "Activer",
   "tray.exit": "Quitter",
   "lbl.scope": "Apps actives (vide = toutes)",
   "btn.capture": "Choisir une app…",

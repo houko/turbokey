@@ -1,6 +1,6 @@
 {
   "app.title": "TurboKey · Pressione automatica",
-  "master": "Interruttore (F8)",
+  "master": "Interruttore",
   "lbl.lang": "Lingua",
   "lang.auto": "Auto",
   "status.on": "Stato: attivo",
@@ -25,7 +25,7 @@
   "footer": "Doppio clic su una riga per alternare · chiudi = tray",
   "tray.tooltip": "TurboKey",
   "tray.show": "Mostra finestra",
-  "tray.master": "Attiva (F8)",
+  "tray.master": "Attiva",
   "tray.exit": "Esci",
   "lbl.scope": "App attive (vuoto = tutte)",
   "btn.capture": "Scegli app…",
