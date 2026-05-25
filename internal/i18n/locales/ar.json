@@ -37,7 +37,11 @@
   "tray.about": "حول",
   "update.failed": "تعذر التحقق من التحديثات. حاول لاحقًا.",
   "update.uptodate": "أنت على أحدث إصدار (%s).",
-  "update.available": "إصدار جديد متاح: %s (لديك %s).\nفتح صفحة الإصدارات؟",
+  "update.available": "إصدار جديد متاح: %s (لديك %s).\nالتنزيل والتثبيت الآن؟",
+  "update.noAsset": "لا يحتوي الإصدار الجديد على ملف تثبيت.\nفتح صفحة الإصدارات؟",
+  "update.downloading": "جارٍ تنزيل التحديث… %d%%",
+  "update.downloadFailed": "فشل التحديث: %s",
+  "update.installing": "جارٍ تثبيت التحديث…",
   "about.body": "TurboKey %s\n\nأداة النقر التلقائي\nhttps://github.com/houko/turbokey\nرخصة MIT",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "تم التصغير إلى شريط النظام. انقر بزر الفأرة الأيمن على الأيقونة للخروج."

@@ -37,7 +37,11 @@
   "tray.about": "情報",
   "update.failed": "更新を確認できませんでした。後で再試行してください。",
   "update.uptodate": "最新バージョンです (%s)。",
-  "update.available": "新しいバージョンが利用可能: %s (現在 %s)。\nリリースページを開きますか?",
+  "update.available": "新しいバージョンが利用可能: %s (現在 %s)。\nダウンロードしてインストールしますか?",
+  "update.noAsset": "新しいリリースにインストーラーがありません。\nリリースページを開きますか?",
+  "update.downloading": "ダウンロード中… %d%%",
+  "update.downloadFailed": "更新に失敗: %s",
+  "update.installing": "更新をインストール中…",
   "about.body": "TurboKey %s\n\nキー連打ツール\nhttps://github.com/houko/turbokey\nMIT ライセンス",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "トレイに最小化しました。アイコンを右クリックで終了します。"

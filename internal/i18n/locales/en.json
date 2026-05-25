@@ -37,7 +37,11 @@
   "tray.about": "About",
   "update.failed": "Could not check for updates. Try again later.",
   "update.uptodate": "You're on the latest version (%s).",
-  "update.available": "A new version is available: %s (you have %s).\nOpen the Releases page?",
+  "update.available": "A new version is available: %s (you have %s).\nDownload and install now?",
+  "update.noAsset": "The new release has no installer.\nOpen the Releases page instead?",
+  "update.downloading": "Downloading update… %d%%",
+  "update.downloadFailed": "Update failed: %s",
+  "update.installing": "Installing update…",
   "about.body": "TurboKey %s\n\nKey auto-fire (rapid-fire) tool\nhttps://github.com/houko/turbokey\nMIT License",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "Minimized to tray. Right-click the icon to exit."

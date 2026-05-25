@@ -37,7 +37,11 @@
   "tray.about": "关于",
   "update.failed": "无法检查更新, 请稍后再试。",
   "update.uptodate": "已是最新版本 (%s)。",
-  "update.available": "有新版本: %s (当前 %s)。\n打开发布页面?",
+  "update.available": "有新版本: %s (当前 %s)。\n现在下载并安装?",
+  "update.noAsset": "新版本未提供安装包。\n打开发布页面?",
+  "update.downloading": "下载更新中… %d%%",
+  "update.downloadFailed": "更新失败: %s",
+  "update.installing": "正在安装更新…",
   "about.body": "TurboKey %s\n\n按键连发工具\nhttps://github.com/houko/turbokey\nMIT 许可证",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "已最小化到系统托盘。右键托盘图标可退出。"

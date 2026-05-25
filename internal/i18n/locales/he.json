@@ -37,7 +37,11 @@
   "tray.about": "אודות",
   "update.failed": "לא ניתן לבדוק עדכונים. נסה שוב מאוחר יותר.",
   "update.uptodate": "אתה בגרסה העדכנית ביותר (%s).",
-  "update.available": "גרסה חדשה זמינה: %s (אצלך %s).\nלפתוח את עמוד הגרסאות?",
+  "update.available": "גרסה חדשה זמינה: %s (אצלך %s).\nלהוריד ולהתקין עכשיו?",
+  "update.noAsset": "בגרסה החדשה אין קובץ התקנה.\nלפתוח את עמוד הגרסאות?",
+  "update.downloading": "מוריד עדכון… %d%%",
+  "update.downloadFailed": "העדכון נכשל: %s",
+  "update.installing": "מתקין עדכון…",
   "about.body": "TurboKey %s\n\nכלי לחיצה אוטומטית\nhttps://github.com/houko/turbokey\nרישיון MIT",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "מוזער למגש המערכת. לחץ לחיצה ימנית על הסמל כדי לצאת."

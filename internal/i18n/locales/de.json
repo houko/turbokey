@@ -37,7 +37,11 @@
   "tray.about": "Über",
   "update.failed": "Updates konnten nicht geprüft werden. Bitte später erneut versuchen.",
   "update.uptodate": "Du nutzt die neueste Version (%s).",
-  "update.available": "Neue Version verfügbar: %s (aktuell %s).\nReleases-Seite öffnen?",
+  "update.available": "Neue Version verfügbar: %s (aktuell %s).\nJetzt herunterladen und installieren?",
+  "update.noAsset": "Die neue Version hat keinen Installer.\nReleases-Seite öffnen?",
+  "update.downloading": "Update wird heruntergeladen… %d%%",
+  "update.downloadFailed": "Update fehlgeschlagen: %s",
+  "update.installing": "Update wird installiert…",
   "about.body": "TurboKey %s\n\nAuto-Tasten-Werkzeug\nhttps://github.com/houko/turbokey\nMIT-Lizenz",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "In den Infobereich minimiert. Rechtsklick auf das Symbol zum Beenden."

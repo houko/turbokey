@@ -37,7 +37,11 @@
   "tray.about": "О программе",
   "update.failed": "Не удалось проверить обновления. Повторите позже.",
   "update.uptodate": "У вас последняя версия (%s).",
-  "update.available": "Доступна новая версия: %s (у вас %s).\nОткрыть страницу релизов?",
+  "update.available": "Доступна новая версия: %s (у вас %s).\nСкачать и установить сейчас?",
+  "update.noAsset": "У новой версии нет установщика.\nОткрыть страницу релизов?",
+  "update.downloading": "Загрузка обновления… %d%%",
+  "update.downloadFailed": "Сбой обновления: %s",
+  "update.installing": "Установка обновления…",
   "about.body": "TurboKey %s\n\nИнструмент автонажатия\nhttps://github.com/houko/turbokey\nЛицензия MIT",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "Свёрнуто в трей. Щёлкните значок правой кнопкой, чтобы выйти."

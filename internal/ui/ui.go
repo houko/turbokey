@@ -539,7 +539,9 @@ func openURL(url string) {
 }
 
 // onCheckUpdates queries the GitHub Releases API on a background goroutine and
-// shows a message box on the UI thread with the result.
+// shows a message box on the UI thread with the result. If a newer release is
+// found and the user confirms, the new exe is downloaded and the running
+// process is replaced in place.
 func (mw *mainWindow) onCheckUpdates() {
 	go func() {
 		rel, err := updater.Latest()
@@ -552,12 +554,96 @@ func (mw *mainWindow) onCheckUpdates() {
 				walk.MsgBox(mw, "TurboKey", fmt.Sprintf(i18n.T("update.uptodate"), buildinfo.Version), walk.MsgBoxIconInformation)
 				return
 			}
-			msg := fmt.Sprintf(i18n.T("update.available"), rel.Tag, buildinfo.Version)
-			if walk.MsgBox(mw, "TurboKey", msg, walk.MsgBoxOKCancel|walk.MsgBoxIconQuestion) == walk.DlgCmdOK {
-				openURL(rel.URL)
+			// Release lacks the turbokey.exe asset: fall back to the release page.
+			if rel.AssetURL == "" {
+				if walk.MsgBox(mw, "TurboKey", i18n.T("update.noAsset"), walk.MsgBoxOKCancel|walk.MsgBoxIconQuestion) == walk.DlgCmdOK {
+					openURL(rel.URL)
+				}
+				return
 			}
+			msg := fmt.Sprintf(i18n.T("update.available"), rel.Tag, buildinfo.Version)
+			if walk.MsgBox(mw, "TurboKey", msg, walk.MsgBoxOKCancel|walk.MsgBoxIconQuestion) != walk.DlgCmdOK {
+				return
+			}
+			mw.runSelfUpdate(rel)
 		})
 	}()
+}
+
+// runSelfUpdate downloads rel.AssetURL with a modal progress dialog, swaps the
+// running exe, and relaunches. Called on the UI thread.
+func (mw *mainWindow) runSelfUpdate(rel *updater.Release) {
+	tmp, err := os.CreateTemp("", "turbokey-*.exe")
+	if err != nil {
+		walk.MsgBox(mw, "TurboKey", fmt.Sprintf(i18n.T("update.downloadFailed"), err.Error()), walk.MsgBoxIconError)
+		return
+	}
+	tmpPath := tmp.Name()
+	tmp.Close() // updater.Download will reopen it for writing.
+
+	var dlg *walk.Dialog
+	var pb *walk.ProgressBar
+	var lbl *walk.Label
+
+	progress := func(read, total int64) {
+		var pct int
+		if total > 0 {
+			pct = int(read * 100 / total)
+		}
+		mw.Synchronize(func() {
+			if pb != nil {
+				pb.SetValue(pct)
+			}
+			if lbl != nil {
+				lbl.SetText(fmt.Sprintf(i18n.T("update.downloading"), pct))
+			}
+		})
+	}
+
+	// Run the download in a goroutine and signal completion back on the UI thread.
+	go func() {
+		err := updater.Download(rel.AssetURL, tmpPath, progress)
+		mw.Synchronize(func() {
+			if err != nil {
+				if dlg != nil {
+					dlg.Cancel()
+				}
+				_ = os.Remove(tmpPath)
+				walk.MsgBox(mw, "TurboKey", fmt.Sprintf(i18n.T("update.downloadFailed"), err.Error()), walk.MsgBoxIconError)
+				return
+			}
+			if lbl != nil {
+				lbl.SetText(i18n.T("update.installing"))
+			}
+			if pb != nil {
+				pb.SetValue(100)
+			}
+			// Perform the swap and relaunch. preExit releases the singleton mutex
+			// so the new instance can acquire it.
+			if err := updater.SwapAndRelaunch(tmpPath, singleton.Release); err != nil {
+				_ = os.Remove(tmpPath)
+				if dlg != nil {
+					dlg.Cancel()
+				}
+				walk.MsgBox(mw, "TurboKey", fmt.Sprintf(i18n.T("update.downloadFailed"), err.Error()), walk.MsgBoxIconError)
+				return
+			}
+			// Quit immediately so the new instance can take over. exit() disposes
+			// the tray icon and closes the window.
+			mw.exit()
+		})
+	}()
+
+	_, _ = Dialog{
+		AssignTo: &dlg,
+		Title:    "TurboKey",
+		MinSize:  Size{Width: 360, Height: 100},
+		Layout:   VBox{},
+		Children: []Widget{
+			Label{AssignTo: &lbl, Text: fmt.Sprintf(i18n.T("update.downloading"), 0)},
+			ProgressBar{AssignTo: &pb, MinValue: 0, MaxValue: 100},
+		},
+	}.Run(mw)
 }
 
 // onAbout shows a small "About" dialog with the version and project link.

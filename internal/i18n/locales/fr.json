@@ -37,7 +37,11 @@
   "tray.about": "À propos",
   "update.failed": "Impossible de vérifier les mises à jour. Réessayez plus tard.",
   "update.uptodate": "Vous avez la dernière version (%s).",
-  "update.available": "Nouvelle version disponible : %s (vous avez %s).\nOuvrir la page Releases ?",
+  "update.available": "Nouvelle version disponible : %s (vous avez %s).\nTélécharger et installer maintenant ?",
+  "update.noAsset": "Cette version n'a pas d'installateur.\nOuvrir la page Releases ?",
+  "update.downloading": "Téléchargement de la mise à jour… %d%%",
+  "update.downloadFailed": "Mise à jour échouée : %s",
+  "update.installing": "Installation de la mise à jour…",
   "about.body": "TurboKey %s\n\nOutil de frappe automatique\nhttps://github.com/houko/turbokey\nLicence MIT",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "Réduit dans la barre d'état. Clic droit sur l'icône pour quitter."
