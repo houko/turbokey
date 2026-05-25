@@ -1,5 +1,7 @@
 # TurboKey
 
+**English** · [简体中文](docs/README.zh.md) · [繁體中文](docs/README.zh-Hant.md) · [日本語](docs/README.ja.md) · [한국어](docs/README.ko.md) · [Español](docs/README.es.md) · [Français](docs/README.fr.md) · [Deutsch](docs/README.de.md) · [Русский](docs/README.ru.md) · [Português](docs/README.pt.md) · [Italiano](docs/README.it.md) · [العربية](docs/README.ar.md) · [עברית](docs/README.he.md)
+
 A lightweight Windows key auto-fire (rapid-fire / turbo) tool with a native GUI.
 Bind a key to repeat itself — or another key — automatically, either while held
 or as an on/off toggle. Each binding has its own interval.
