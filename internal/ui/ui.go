@@ -147,57 +147,74 @@ func (mw *mainWindow) applyTargets() {
 	mw.save()
 }
 
-// addTarget appends a process name to the target list (deduplicated) and applies it.
-func (mw *mainWindow) addTarget(exe string) {
-	if exe == "" {
-		return
-	}
-	cur := parseTargets(mw.leTargets.Text())
-	for _, c := range cur {
-		if strings.EqualFold(c, exe) {
-			return // already listed
-		}
-	}
-	cur = append(cur, exe)
-	mw.leTargets.SetText(strings.Join(cur, ", "))
-	mw.applyTargets()
+// winPickModel backs the running-apps picker, tracking a checkbox per row.
+type winPickModel struct {
+	walk.TableModelBase
+	items   []winput.WindowInfo
+	checked []bool
 }
 
-// onPick shows a list of running apps and adds the chosen one to the targets.
+func (m *winPickModel) RowCount() int { return len(m.items) }
+
+func (m *winPickModel) Value(row, col int) interface{} {
+	return m.items[row].Title + "  —  " + m.items[row].Exe
+}
+
+func (m *winPickModel) Checked(row int) bool { return m.checked[row] }
+
+func (m *winPickModel) SetChecked(row int, checked bool) error {
+	m.checked[row] = checked
+	return nil
+}
+
+// onPick shows a checkbox list of running apps; all ticked apps are added to the
+// target list at once.
 func (mw *mainWindow) onPick() {
-	wins := winput.VisibleWindows()
-	items := make([]string, len(wins))
-	for i, w := range wins {
-		items[i] = w.Title + "  —  " + w.Exe
-	}
+	model := &winPickModel{items: winput.VisibleWindows()}
+	model.checked = make([]bool, len(model.items))
 
 	var dlg *walk.Dialog
-	var lb *walk.ListBox
 	var okPB *walk.PushButton
-	choose := func() {
-		if i := lb.CurrentIndex(); i >= 0 && i < len(wins) {
-			mw.addTarget(wins[i].Exe)
+	commit := func() {
+		cur := parseTargets(mw.leTargets.Text())
+		for i, w := range model.items {
+			if !model.checked[i] {
+				continue
+			}
+			dup := false
+			for _, c := range cur {
+				if strings.EqualFold(c, w.Exe) {
+					dup = true
+					break
+				}
+			}
+			if !dup {
+				cur = append(cur, w.Exe)
+			}
 		}
+		mw.leTargets.SetText(strings.Join(cur, ", "))
+		mw.applyTargets()
 		dlg.Accept()
 	}
 
 	_, _ = Dialog{
 		AssignTo:      &dlg,
 		Title:         i18n.T("btn.capture"),
-		MinSize:       Size{Width: 460, Height: 380},
+		MinSize:       Size{Width: 480, Height: 400},
 		DefaultButton: &okPB,
 		Layout:        VBox{},
 		Children: []Widget{
-			ListBox{
-				AssignTo:        &lb,
-				Model:           items,
-				OnItemActivated: choose, // double-click a row
+			TableView{
+				CheckBoxes:          true,
+				LastColumnStretched: true,
+				Columns:             []TableViewColumn{{Title: ""}},
+				Model:               model,
 			},
 			Composite{
 				Layout: HBox{},
 				Children: []Widget{
 					HSpacer{},
-					PushButton{AssignTo: &okPB, Text: i18n.T("btn.ok"), OnClicked: choose},
+					PushButton{AssignTo: &okPB, Text: i18n.T("btn.ok"), OnClicked: commit},
 				},
 			},
 		},
