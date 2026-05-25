@@ -116,15 +116,24 @@ func (e *Engine) startRepeatLocked(r *config.Rule) {
 	if _, running := e.workers[r.TriggerVK]; running {
 		return
 	}
-	sc := winput.ScanCode(r.EffectiveOutputVK())
-	ext := keys.IsExtended(r.EffectiveOutputVK())
 	interval := r.IntervalMs
 	if interval < 1 {
 		interval = 1
 	}
+	out := r.EffectiveOutputVK()
+	var down, up func()
+	if keys.IsMouse(out) {
+		down = func() { winput.SendMouseEvent(out, false) }
+		up = func() { winput.SendMouseEvent(out, true) }
+	} else {
+		sc := winput.ScanCode(out)
+		ext := keys.IsExtended(out)
+		down = func() { winput.SendKeyEvent(sc, ext, false) }
+		up = func() { winput.SendKeyEvent(sc, ext, true) }
+	}
 	stop := make(chan struct{})
 	e.workers[r.TriggerVK] = stop
-	go repeatWorker(sc, ext, interval, stop)
+	go repeatWorker(down, up, interval, stop)
 }
 
 func (e *Engine) stopRepeatLocked(triggerVK uint16) {
@@ -145,21 +154,21 @@ func (e *Engine) isRepeatingLocked(triggerVK uint16) bool {
 // least one frame. ~30ms safely covers 60fps and below.
 const keyHoldMs = 30
 
-// repeatWorker presses the output key (down, hold, up), waits one interval, and
-// repeats until stopped. Stopping during the hold still releases the key, so a
-// key is never left stuck down.
-func repeatWorker(sc uint16, ext bool, intervalMs int, stop chan struct{}) {
+// repeatWorker presses the output (down, hold, up), waits one interval, and
+// repeats until stopped. Stopping during the hold still releases it, so an
+// output is never left stuck down.
+func repeatWorker(down, up func(), intervalMs int, stop chan struct{}) {
 	hold := time.Duration(keyHoldMs) * time.Millisecond
 	gap := time.Duration(intervalMs) * time.Millisecond
 	for {
-		winput.SendKeyEvent(sc, ext, false) // down
+		down()
 		select {
 		case <-stop:
-			winput.SendKeyEvent(sc, ext, true) // release on stop
+			up() // release on stop
 			return
 		case <-time.After(hold):
 		}
-		winput.SendKeyEvent(sc, ext, true) // up
+		up()
 		select {
 		case <-stop:
 			return
@@ -180,26 +189,76 @@ func (e *Engine) Start() {
 	e.mu.Unlock()
 
 	winput.BeginHighResTimer()
-	go winput.InstallKeyboardHook(e.hookProc)
+	go winput.InstallHooks(e.keyboardProc, e.mouseProc)
 }
 
-// hookProc is the WH_KEYBOARD_LL callback. Return 1 to swallow the key, or pass
-// it down the hook chain otherwise.
-func (e *Engine) hookProc(nCode, wParam, lParam uintptr) uintptr {
+// keyboardProc is the WH_KEYBOARD_LL callback.
+func (e *Engine) keyboardProc(nCode, wParam, lParam uintptr) uintptr {
 	if int32(nCode) < 0 {
 		return winput.CallNext(nCode, wParam, lParam)
 	}
 	kb := (*winput.KBDLLHOOKSTRUCT)(unsafe.Pointer(lParam))
-
-	// Our own synthesized input: never act on it.
-	if kb.DwExtraInfo == winput.Magic {
+	if kb.DwExtraInfo == winput.Magic { // our own synthesized input
 		return winput.CallNext(nCode, wParam, lParam)
 	}
-
 	vk := uint16(kb.VkCode)
 	down := wParam == winput.WMKeyDown || wParam == winput.WMSysKeyDown
 	up := wParam == winput.WMKeyUp || wParam == winput.WMSysKeyUp
+	if e.dispatch(vk, down, up) {
+		return 1
+	}
+	return winput.CallNext(nCode, wParam, lParam)
+}
 
+// mouseProc is the WH_MOUSE_LL callback, mapping mouse buttons to the same rules.
+func (e *Engine) mouseProc(nCode, wParam, lParam uintptr) uintptr {
+	if int32(nCode) < 0 {
+		return winput.CallNext(nCode, wParam, lParam)
+	}
+	ms := (*winput.MSLLHOOKSTRUCT)(unsafe.Pointer(lParam))
+	if ms.DwExtraInfo == winput.Magic { // our own synthesized input
+		return winput.CallNext(nCode, wParam, lParam)
+	}
+	var vk uint16
+	var down, up bool
+	switch wParam {
+	case winput.WMLButtonDown:
+		vk, down = keys.VKMouseLeft, true
+	case winput.WMLButtonUp:
+		vk, up = keys.VKMouseLeft, true
+	case winput.WMRButtonDown:
+		vk, down = keys.VKMouseRight, true
+	case winput.WMRButtonUp:
+		vk, up = keys.VKMouseRight, true
+	case winput.WMMButtonDown:
+		vk, down = keys.VKMouseMiddle, true
+	case winput.WMMButtonUp:
+		vk, up = keys.VKMouseMiddle, true
+	case winput.WMXButtonDown:
+		vk, down = xbuttonVK(ms.XButton()), true
+	case winput.WMXButtonUp:
+		vk, up = xbuttonVK(ms.XButton()), true
+	default:
+		return winput.CallNext(nCode, wParam, lParam)
+	}
+	if e.dispatch(vk, down, up) {
+		return 1
+	}
+	return winput.CallNext(nCode, wParam, lParam)
+}
+
+func xbuttonVK(xb uint32) uint16 {
+	if xb == 2 {
+		return keys.VKMouseX2
+	}
+	return keys.VKMouseX1
+}
+
+// dispatch applies a trigger event (from the keyboard or mouse hook) and reports
+// whether the event should be swallowed. e.pressed[vk] marks a press we have
+// consumed; triggers are only consumed in a target app, and once consumed the
+// matching release and any auto-repeat are consumed too so nothing leaks elsewhere.
+func (e *Engine) dispatch(vk uint16, down, up bool) bool {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
@@ -211,48 +270,45 @@ func (e *Engine) hookProc(nCode, wParam, lParam uintptr) uintptr {
 		} else if up {
 			delete(e.pressed, vk)
 		}
-		return 1
+		return true
 	}
 
 	if !e.master {
-		return winput.CallNext(nCode, wParam, lParam)
+		return false
 	}
 
 	rule, ok := e.byTrigger[vk]
 	if !ok || !rule.Enabled {
-		return winput.CallNext(nCode, wParam, lParam)
+		return false
 	}
 
-	// e.pressed[vk] marks a physical press we have consumed (swallowed). Keys are
-	// only consumed in a target app; once consumed, the matching key-up and any OS
-	// auto-repeat are also consumed so the keystroke never leaks to other apps.
 	switch rule.Mode {
 	case config.ModeHold:
 		if down {
 			if e.pressed[vk] {
-				return 1 // already firing this hold; swallow auto-repeat
+				return true // already firing this hold; swallow auto-repeat
 			}
 			if !e.targetActiveLocked() {
-				return winput.CallNext(nCode, wParam, lParam) // wrong app: key works normally
+				return false // wrong app: input works normally
 			}
 			e.pressed[vk] = true
 			e.startRepeatLocked(rule)
-			return 1
+			return true
 		}
 		if up && e.pressed[vk] {
 			delete(e.pressed, vk)
 			e.stopRepeatLocked(rule.TriggerVK)
-			return 1
+			return true
 		}
-		return winput.CallNext(nCode, wParam, lParam)
+		return false
 	case config.ModeToggle:
 		if down {
 			if e.pressed[vk] {
-				return 1 // auto-repeat of a press we consumed
+				return true // auto-repeat of a press we consumed
 			}
-			// A new press: allowed to stop from anywhere, but only start in a target app.
+			// New press: stop from anywhere, but only start in a target app.
 			if !e.isRepeatingLocked(rule.TriggerVK) && !e.targetActiveLocked() {
-				return winput.CallNext(nCode, wParam, lParam)
+				return false
 			}
 			e.pressed[vk] = true
 			if e.isRepeatingLocked(rule.TriggerVK) {
@@ -260,13 +316,13 @@ func (e *Engine) hookProc(nCode, wParam, lParam uintptr) uintptr {
 			} else {
 				e.startRepeatLocked(rule)
 			}
-			return 1
+			return true
 		}
 		if up && e.pressed[vk] {
 			delete(e.pressed, vk)
-			return 1
+			return true
 		}
-		return winput.CallNext(nCode, wParam, lParam)
+		return false
 	}
-	return winput.CallNext(nCode, wParam, lParam)
+	return false
 }

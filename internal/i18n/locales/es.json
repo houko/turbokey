@@ -31,6 +31,8 @@
   "btn.capture": "Elegir app…",
   "btn.ok": "Aceptar",
   "btn.update": "Actualizar",
+  "chk.autostart": "Iniciar con Windows",
+  "msg.dupTrigger": "Otra regla ya usa esta tecla de activación.",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "Minimizado a la bandeja. Clic derecho en el icono para salir."
 }

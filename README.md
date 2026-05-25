@@ -11,6 +11,8 @@ is held briefly so poll-based games reliably sample it.
 > Windows only. Built with Go + [lxn/walk](https://github.com/lxn/walk) (native
 > Win32 controls), single self-contained executable, no runtime to install.
 
+<p align="center"><img src="docs/screenshot.png" alt="TurboKey" width="380"></p>
+
 ## Download
 
 Grab the latest `turbokey.exe` from the [Releases](../../releases) page. Every push
@@ -20,6 +22,8 @@ to `main` auto-builds and publishes a new versioned release via GitHub Actions.
 
 - Per-rule **trigger key**, **output key** (defaults to the trigger), **mode**,
   **interval**, and enable/disable.
+- Keyboard keys **or mouse buttons** (left / right / middle / X1 / X2) as the
+  trigger and the output.
 - Two modes per rule:
   - **Hold** — repeats while the trigger key is physically held down.
   - **Toggle** — one press starts repeating, the next press stops.
@@ -29,6 +33,8 @@ to `main` auto-builds and publishes a new versioned release via GitHub Actions.
 - **System tray**: closing the window minimizes to the tray (the tool keeps
   running). Left-click the tray icon to restore it; right-click for a menu to
   show the window, toggle the master switch, or quit.
+- Optional **Start with Windows**, registered as a scheduled task so it launches
+  elevated at logon without a UAC prompt.
 - Rules are saved to `config.json` next to the executable and reloaded on start.
 - Localized UI in 13 languages (incl. right-to-left Arabic & Hebrew with a fully
   mirrored layout), auto-detected from the OS, with an in-app picker.
@@ -76,13 +82,16 @@ GOOS=windows GOARCH=amd64 CGO_ENABLED=0 \
 ## Project layout
 
 ```
-cmd/turbokey/      entry point (main) + Windows application manifest
-internal/keys/     key table; display-name <-> virtual-key-code mapping
+cmd/turbokey/      entry point (main) + Windows application manifest + icon
+cmd/gen-icon/      build-time icon generator (renders icon.ico / icon.png)
+internal/keys/     key & mouse-button table; name <-> virtual-key-code mapping
 internal/i18n/     UI localization; embedded JSON message catalogs (locales/)
 internal/config/   rule model and config.json load/save
-internal/winput/   Win32 wrappers: low-level keyboard hook + SendInput
-internal/engine/   rapid-fire engine: hook callback, master switch, workers
+internal/winput/   Win32 wrappers: keyboard & mouse hooks, SendInput, foreground
+internal/engine/   rapid-fire engine: hook dispatch, master switch, workers
 internal/ui/       native Win32 GUI (lxn/walk)
+internal/autostart/ logon scheduled task (Start with Windows)
+internal/buildinfo/ build version, injected via -ldflags
 ```
 
 ## Usage
@@ -119,7 +128,8 @@ Notes:
 - `output: ""` means "same as the trigger key".
 - `mode`: `"hold"` or `"toggle"`.
 - Key names: `A`–`Z`, `0`–`9`, `F1`–`F12`, `Space`, `Enter`, `Esc`, `Tab`,
-  `↑ ↓ ← →`, `Ctrl`, `Alt`, `Shift`. (These are language-neutral identifiers and
+  `↑ ↓ ← →`, `Ctrl`, `Alt`, `Shift`, and mouse buttons `Mouse Left`, `Mouse Right`,
+  `Mouse Mid`, `Mouse X1`, `Mouse X2`. (These are language-neutral identifiers and
   are not translated, so the config stays valid across UI languages.)
 
 ## Limiting to specific apps

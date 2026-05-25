@@ -31,6 +31,8 @@
   "btn.capture": "选择程序…",
   "btn.ok": "确定",
   "btn.update": "更新",
+  "chk.autostart": "开机自启",
+  "msg.dupTrigger": "已有规则使用了这个触发键。",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "已最小化到系统托盘。右键托盘图标可退出。"
 }

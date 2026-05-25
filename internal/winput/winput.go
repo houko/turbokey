@@ -9,6 +9,7 @@ import (
 	"runtime"
 	"strings"
 	"sync"
+	"sync/atomic"
 	"unsafe"
 
 	"golang.org/x/sys/windows"
@@ -22,17 +23,45 @@ const (
 	WMSysKeyUp   = 0x0105
 )
 
+// WM_* mouse message identifiers delivered to a low-level mouse hook.
+const (
+	WMLButtonDown = 0x0201
+	WMLButtonUp   = 0x0202
+	WMRButtonDown = 0x0204
+	WMRButtonUp   = 0x0205
+	WMMButtonDown = 0x0207
+	WMMButtonUp   = 0x0208
+	WMXButtonDown = 0x020B
+	WMXButtonUp   = 0x020C
+)
+
 // Magic tags every event we synthesize, so the hook can recognize and pass our
 // own injected keys through instead of re-triggering on them.
 const Magic uintptr = 0x1F2A3B4C
 
 const (
 	whKeyboardLL         = 13
+	whMouseLL            = 14
 	inputKeyboard        = 1
+	inputMouse           = 0
 	keyeventfExtendedKey = 0x0001
 	keyeventfKeyUp       = 0x0002
 	keyeventfScancode    = 0x0008
 	mapvkVKToVSC         = 0
+
+	mouseeventfLeftDown   = 0x0002
+	mouseeventfLeftUp     = 0x0004
+	mouseeventfRightDown  = 0x0008
+	mouseeventfRightUp    = 0x0010
+	mouseeventfMiddleDown = 0x0020
+	mouseeventfMiddleUp   = 0x0040
+	mouseeventfXDown      = 0x0080
+	mouseeventfXUp        = 0x0100
+	xbutton1              = 0x0001
+	xbutton2              = 0x0002
+
+	eventSystemForeground = 0x0003
+	wineventOutOfContext  = 0x0000
 )
 
 // KBDLLHOOKSTRUCT mirrors the Win32 struct passed to a WH_KEYBOARD_LL proc.
@@ -61,6 +90,36 @@ type input struct {
 	_    uint32
 	Ki   keybdinput
 	_    [8]byte
+}
+
+// MSLLHOOKSTRUCT mirrors the Win32 struct passed to a WH_MOUSE_LL proc.
+type MSLLHOOKSTRUCT struct {
+	Pt          struct{ X, Y int32 }
+	MouseData   uint32
+	Flags       uint32
+	Time        uint32
+	DwExtraInfo uintptr
+}
+
+// XButton returns 1 (XBUTTON1) or 2 (XBUTTON2) from a mouse hook struct.
+func (m *MSLLHOOKSTRUCT) XButton() uint32 { return m.MouseData >> 16 & 0xFFFF }
+
+// mouseinput mirrors the Win32 MOUSEINPUT structure.
+type mouseinput struct {
+	Dx          int32
+	Dy          int32
+	MouseData   uint32
+	DwFlags     uint32
+	Time        uint32
+	DwExtraInfo uintptr
+}
+
+// mouseInput is the Win32 INPUT structure with the MOUSEINPUT variant (40 bytes
+// on amd64, same union slot as the keyboard variant).
+type mouseInput struct {
+	Type uint32
+	_    uint32
+	Mi   mouseinput
 }
 
 type msg struct {
@@ -98,6 +157,7 @@ var (
 	procGetWindowTextW             = user32.NewProc("GetWindowTextW")
 	procGetWindowTextLengthW       = user32.NewProc("GetWindowTextLengthW")
 	procGetWindowLongPtrW          = user32.NewProc("GetWindowLongPtrW")
+	procSetWinEventHook            = user32.NewProc("SetWinEventHook")
 )
 
 const (
@@ -125,9 +185,20 @@ func processExeName(pid uint32) string {
 	return strings.ToLower(filepath.Base(windows.UTF16ToString(buf[:n])))
 }
 
-// ForegroundProcessName returns the lowercase executable base name of the process
-// owning the current foreground window (e.g. "dnfgame.exe"), or "" on failure.
+// fgCache holds the foreground process exe name, refreshed by a WinEvent hook so
+// the keyboard/mouse hooks can read it without a syscall on every keystroke.
+var fgCache atomic.Value // string
+
+// ForegroundProcessName returns the cached lowercase exe name of the foreground
+// window's process (e.g. "dnfgame.exe"), or "" if unknown.
 func ForegroundProcessName() string {
+	if v, ok := fgCache.Load().(string); ok {
+		return v
+	}
+	return ""
+}
+
+func queryForeground() string {
 	hwnd, _, _ := procGetForegroundWindow.Call()
 	if hwnd == 0 {
 		return ""
@@ -136,6 +207,16 @@ func ForegroundProcessName() string {
 	procGetWindowThreadProcessId.Call(hwnd, uintptr(unsafe.Pointer(&pid)))
 	return processExeName(pid)
 }
+
+// winEventProc updates the foreground cache whenever the foreground window changes.
+func winEventProc(_, _, hwnd, _, _, _, _ uintptr) uintptr {
+	var pid uint32
+	procGetWindowThreadProcessId.Call(hwnd, uintptr(unsafe.Pointer(&pid)))
+	fgCache.Store(processExeName(pid))
+	return 0
+}
+
+var winEventCb = windows.NewCallback(winEventProc)
 
 // WindowInfo is one entry in the running-apps picker: a window title and the
 // owning process's executable name.
@@ -227,6 +308,45 @@ func SendKeyEvent(sc uint16, extended, keyUp bool) {
 	procSendInput.Call(1, uintptr(unsafe.Pointer(&in)), unsafe.Sizeof(in))
 }
 
+// SendMouseEvent injects a single mouse button event (down or up) at the current
+// cursor position, tagged with Magic so our own hooks pass it through.
+func SendMouseEvent(vk uint16, keyUp bool) {
+	var flags, data uint32
+	switch vk {
+	case 0x01: // left
+		flags = mouseeventfLeftDown
+		if keyUp {
+			flags = mouseeventfLeftUp
+		}
+	case 0x02: // right
+		flags = mouseeventfRightDown
+		if keyUp {
+			flags = mouseeventfRightUp
+		}
+	case 0x04: // middle
+		flags = mouseeventfMiddleDown
+		if keyUp {
+			flags = mouseeventfMiddleUp
+		}
+	case 0x05, 0x06: // X1 / X2
+		flags = mouseeventfXDown
+		if keyUp {
+			flags = mouseeventfXUp
+		}
+		if vk == 0x05 {
+			data = xbutton1
+		} else {
+			data = xbutton2
+		}
+	default:
+		return
+	}
+	var in mouseInput
+	in.Type = inputMouse
+	in.Mi = mouseinput{MouseData: data, DwFlags: flags, DwExtraInfo: Magic}
+	procSendInput.Call(1, uintptr(unsafe.Pointer(&in)), unsafe.Sizeof(in))
+}
+
 // CallNext passes an event down the hook chain.
 func CallNext(nCode, wParam, lParam uintptr) uintptr {
 	r, _, _ := procCallNextHookEx.Call(0, nCode, wParam, lParam)
@@ -239,16 +359,20 @@ func BeginHighResTimer() {
 	procTimeBeginPeriod.Call(1)
 }
 
-// HookProc is a WH_KEYBOARD_LL callback: return nonzero to swallow the key.
+// HookProc is a low-level hook callback: return nonzero to swallow the event.
 type HookProc func(nCode, wParam, lParam uintptr) uintptr
 
-// InstallKeyboardHook installs a global low-level keyboard hook and runs the
-// message loop. It locks the OS thread and blocks, so run it in its own goroutine.
-func InstallKeyboardHook(proc HookProc) {
+// InstallHooks installs the global low-level keyboard and mouse hooks plus a
+// foreground-window WinEvent hook, then runs the message loop. It locks the OS
+// thread and blocks, so run it in its own goroutine.
+func InstallHooks(keyboard, mouse HookProc) {
 	runtime.LockOSThread()
 
-	cb := windows.NewCallback(proc)
-	procSetWindowsHookExW.Call(whKeyboardLL, cb, moduleHandle(), 0)
+	hMod := moduleHandle()
+	procSetWindowsHookExW.Call(whKeyboardLL, windows.NewCallback(keyboard), hMod, 0)
+	procSetWindowsHookExW.Call(whMouseLL, windows.NewCallback(mouse), hMod, 0)
+	procSetWinEventHook.Call(eventSystemForeground, eventSystemForeground, 0, winEventCb, 0, 0, wineventOutOfContext)
+	fgCache.Store(queryForeground())
 
 	var m msg
 	for {

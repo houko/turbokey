@@ -31,6 +31,8 @@
   "btn.capture": "アプリを選択…",
   "btn.ok": "OK",
   "btn.update": "更新",
+  "chk.autostart": "Windows起動時に実行",
+  "msg.dupTrigger": "このトリガーキーは別のルールで使用済みです。",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "トレイに最小化しました。アイコンを右クリックで終了します。"
 }

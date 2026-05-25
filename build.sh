@@ -21,8 +21,11 @@ fi
 GOOS=windows GOARCH=amd64 go mod tidy
 
 # Build the GUI exe (-H windowsgui hides the console window).
+VERSION="$(git describe --tags --always --dirty 2>/dev/null || echo dev)"
 GOOS=windows GOARCH=amd64 CGO_ENABLED=0 \
-  go build -trimpath -ldflags "-H windowsgui -s -w" -o turbokey.exe ./cmd/turbokey
+  go build -trimpath \
+    -ldflags "-H windowsgui -s -w -X turbokey/internal/buildinfo.Version=${VERSION}" \
+    -o turbokey.exe ./cmd/turbokey
 
 echo "--- built ---"
 ls -lh turbokey.exe

@@ -1,10 +1,14 @@
 name: Release
 
-# Every push to main cuts a new release: auto-bump the version, build the Windows
-# exe, and publish it as a release asset.
+# Every push to main (code changes) runs the checks, then cuts a versioned
+# release with the built Windows exe.
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+      - 'docs/**'
 
 permissions:
   contents: write
@@ -15,7 +19,21 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+          cache: true
+      # unsafeptr is disabled: converting a hook's lParam (a foreign pointer
+      # passed as uintptr) to a struct pointer is the standard, safe win32 idiom.
+      - run: go vet -unsafeptr=false ./...
+      - run: go test ./...
+
   release:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -47,7 +65,9 @@ jobs:
           go install github.com/akavel/rsrc@latest
           "$(go env GOPATH)/bin/rsrc" -manifest cmd/turbokey/app.manifest -ico cmd/turbokey/icon.ico -arch amd64 -o cmd/turbokey/rsrc_windows_amd64.syso
           GOOS=windows GOARCH=amd64 CGO_ENABLED=0 \
-            go build -trimpath -ldflags "-H windowsgui -s -w" -o turbokey.exe ./cmd/turbokey
+            go build -trimpath \
+              -ldflags "-H windowsgui -s -w -X turbokey/internal/buildinfo.Version=${{ steps.ver.outputs.version }}" \
+              -o turbokey.exe ./cmd/turbokey
 
       - name: Publish release
         uses: softprops/action-gh-release@v2

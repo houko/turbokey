@@ -31,6 +31,8 @@
   "btn.capture": "Scegli app…",
   "btn.ok": "OK",
   "btn.update": "Aggiorna",
+  "chk.autostart": "Avvia con Windows",
+  "msg.dupTrigger": "Un'altra regola usa già questo tasto trigger.",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "Ridotto nella tray. Clic destro sull'icona per uscire."
 }

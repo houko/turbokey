@@ -75,8 +75,13 @@ func path() string {
 
 // Load reads the config next to the executable. A missing file yields an empty
 // config, not an error.
-func Load() (*File, error) {
-	data, err := os.ReadFile(path())
+func Load() (*File, error) { return loadFrom(path()) }
+
+// Save writes the config next to the executable.
+func Save(f *File) error { return saveTo(path(), f) }
+
+func loadFrom(p string) (*File, error) {
+	data, err := os.ReadFile(p)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return &File{}, nil
@@ -119,8 +124,7 @@ func Load() (*File, error) {
 	return &File{Lang: dto.Lang, Targets: dto.Targets, Rules: rules}, nil
 }
 
-// Save writes the config to config.json next to the executable.
-func Save(f *File) error {
+func saveTo(p string, f *File) error {
 	dto := configDTO{Lang: f.Lang, Targets: f.Targets, Rules: make([]ruleDTO, 0, len(f.Rules))}
 	for _, r := range f.Rules {
 		out := ""
@@ -144,5 +148,5 @@ func Save(f *File) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(path(), data, 0644)
+	return os.WriteFile(p, data, 0644)
 }

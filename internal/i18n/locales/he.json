@@ -31,6 +31,8 @@
   "btn.capture": "בחר אפליקציה…",
   "btn.ok": "אישור",
   "btn.update": "עדכון",
+  "chk.autostart": "הפעלה עם Windows",
+  "msg.dupTrigger": "מקש ההפעלה הזה כבר בשימוש בכלל אחר.",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "מוזער למגש המערכת. לחץ לחיצה ימנית על הסמל כדי לצאת."
 }

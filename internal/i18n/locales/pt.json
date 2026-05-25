@@ -31,6 +31,8 @@
   "btn.capture": "Escolher app…",
   "btn.ok": "OK",
   "btn.update": "Atualizar",
+  "chk.autostart": "Iniciar com o Windows",
+  "msg.dupTrigger": "Outra regra já usa esta tecla de gatilho.",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "Minimizado para a bandeja. Clique com o botão direito no ícone para sair."
 }

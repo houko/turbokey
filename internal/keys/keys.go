@@ -6,22 +6,34 @@ package keys
 
 import "fmt"
 
-// keyDef describes one selectable key: display name, virtual-key code, and
-// whether it is an "extended" key (needs KEYEVENTF_EXTENDEDKEY when injected).
+// keyDef describes one selectable input: display name, virtual-key code, whether
+// it is an "extended" key (needs KEYEVENTF_EXTENDEDKEY when injected), and whether
+// it is a mouse button rather than a keyboard key.
 type keyDef struct {
-	name string
-	vk   uint16
-	ext  bool
+	name  string
+	vk    uint16
+	ext   bool
+	mouse bool
 }
 
 // Names is the ordered list of display names shown in combo boxes.
 var Names []string
+
+// Mouse-button virtual-key codes (same values Windows uses for VK_*BUTTON).
+const (
+	VKMouseLeft   = 0x01
+	VKMouseRight  = 0x02
+	VKMouseMiddle = 0x04
+	VKMouseX1     = 0x05
+	VKMouseX2     = 0x06
+)
 
 var (
 	defs       []keyDef
 	nameToVK   = map[string]uint16{}
 	vkToName   = map[uint16]string{}
 	vkExtended = map[uint16]bool{}
+	vkMouse    = map[uint16]bool{}
 )
 
 func init() {
@@ -52,6 +64,12 @@ func init() {
 		keyDef{name: "Ctrl", vk: 0x11},
 		keyDef{name: "Alt", vk: 0x12},
 		keyDef{name: "Shift", vk: 0x10},
+		// Mouse buttons (language-neutral names; also persisted to config).
+		keyDef{name: "Mouse Left", vk: VKMouseLeft, mouse: true},
+		keyDef{name: "Mouse Right", vk: VKMouseRight, mouse: true},
+		keyDef{name: "Mouse Mid", vk: VKMouseMiddle, mouse: true},
+		keyDef{name: "Mouse X1", vk: VKMouseX1, mouse: true},
+		keyDef{name: "Mouse X2", vk: VKMouseX2, mouse: true},
 	)
 
 	for _, k := range defs {
@@ -59,6 +77,7 @@ func init() {
 		nameToVK[k.name] = k.vk
 		vkToName[k.vk] = k.name
 		vkExtended[k.vk] = k.ext
+		vkMouse[k.vk] = k.mouse
 	}
 }
 
@@ -79,6 +98,11 @@ func Name(vk uint16) string {
 // IsExtended reports whether a key needs KEYEVENTF_EXTENDEDKEY when injected.
 func IsExtended(vk uint16) bool {
 	return vkExtended[vk]
+}
+
+// IsMouse reports whether a virtual-key code denotes a mouse button.
+func IsMouse(vk uint16) bool {
+	return vkMouse[vk]
 }
 
 // Index returns the position of a key in Names, or -1 if unknown.

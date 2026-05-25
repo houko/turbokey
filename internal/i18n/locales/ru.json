@@ -31,6 +31,8 @@
   "btn.capture": "Выбрать прил.…",
   "btn.ok": "ОК",
   "btn.update": "Обновить",
+  "chk.autostart": "Запуск с Windows",
+  "msg.dupTrigger": "Эта клавиша-триггер уже используется другим правилом.",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "Свёрнуто в трей. Щёлкните значок правой кнопкой, чтобы выйти."
 }

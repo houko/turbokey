@@ -31,6 +31,8 @@
   "btn.capture": "Choisir une app…",
   "btn.ok": "OK",
   "btn.update": "Mettre à jour",
+  "chk.autostart": "Démarrer avec Windows",
+  "msg.dupTrigger": "Une autre règle utilise déjà cette touche de déclenchement.",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "Réduit dans la barre d'état. Clic droit sur l'icône pour quitter."
 }

@@ -31,6 +31,8 @@
   "btn.capture": "اختيار تطبيق…",
   "btn.ok": "موافق",
   "btn.update": "تحديث",
+  "chk.autostart": "التشغيل مع ويندوز",
+  "msg.dupTrigger": "هذا المفتاح مستخدم بالفعل في قاعدة أخرى.",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "تم التصغير إلى شريط النظام. انقر بزر الفأرة الأيمن على الأيقونة للخروج."
 }

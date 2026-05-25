@@ -17,6 +17,8 @@ import (
 	"github.com/lxn/walk"
 	. "github.com/lxn/walk/declarative"
 
+	"turbokey/internal/autostart"
+	"turbokey/internal/buildinfo"
 	"turbokey/internal/config"
 	"turbokey/internal/engine"
 	"turbokey/internal/i18n"
@@ -87,12 +89,13 @@ type mainWindow struct {
 	eng   *engine.Engine
 	model *ruleModel
 
-	tv         *walk.TableView
-	cbMaster   *walk.CheckBox
-	lblStatus  *walk.Label
-	cbLang     *walk.ComboBox
-	leTargets  *walk.LineEdit
-	leName     *walk.LineEdit
+	tv          *walk.TableView
+	cbMaster    *walk.CheckBox
+	cbAutostart *walk.CheckBox
+	lblStatus   *walk.Label
+	cbLang      *walk.ComboBox
+	leTargets   *walk.LineEdit
+	leName      *walk.LineEdit
 	cbTrigger  *walk.ComboBox
 	cbOutput   *walk.ComboBox
 	cbMode     *walk.ComboBox
@@ -104,6 +107,7 @@ type mainWindow struct {
 	lang           string   // selected language code: "" (auto) | "zh" | "en"
 	targets        []string // process exe names the tool acts in (empty = all)
 	langReady      bool     // true once the language combo's initial value is set
+	autostartReady bool     // true once the autostart checkbox's initial value is set
 	applyingMaster int32  // guard: suppress checkbox handler during programmatic updates
 	exiting        bool   // true once the user chose Exit, so close is not redirected to tray
 	toldTray       bool   // whether the "minimized to tray" balloon was already shown
@@ -299,9 +303,24 @@ func (mw *mainWindow) editorRule() (*config.Rule, bool) {
 	}, true
 }
 
+// triggerConflict reports whether another rule (other than the one at except)
+// already uses the trigger key vk.
+func (mw *mainWindow) triggerConflict(vk uint16, except int) bool {
+	for i, r := range mw.model.rules {
+		if i != except && r.TriggerVK == vk {
+			return true
+		}
+	}
+	return false
+}
+
 func (mw *mainWindow) onAdd() {
 	r, ok := mw.editorRule()
 	if !ok {
+		return
+	}
+	if mw.triggerConflict(r.TriggerVK, -1) {
+		walk.MsgBox(mw, "TurboKey", i18n.T("msg.dupTrigger"), walk.MsgBoxIconWarning)
 		return
 	}
 	mw.model.rules = append(mw.model.rules, r)
@@ -320,10 +339,28 @@ func (mw *mainWindow) onUpdate() {
 	if !ok {
 		return
 	}
+	if mw.triggerConflict(r.TriggerVK, i) {
+		walk.MsgBox(mw, "TurboKey", i18n.T("msg.dupTrigger"), walk.MsgBoxIconWarning)
+		return
+	}
 	r.Enabled = mw.model.rules[i].Enabled
 	mw.model.rules[i] = r
 	mw.model.PublishRowsReset()
 	mw.apply()
+}
+
+// onAutostartToggled enables/disables launching at logon (a scheduled task).
+func (mw *mainWindow) onAutostartToggled() {
+	if !mw.autostartReady {
+		return
+	}
+	on := mw.cbAutostart.Checked()
+	if err := autostart.Set(on); err != nil {
+		// Revert the checkbox if the task couldn't be (un)registered.
+		mw.autostartReady = false
+		mw.cbAutostart.SetChecked(!on)
+		mw.autostartReady = true
+	}
 }
 
 // onRuleSelected loads the selected rule into the editor fields for editing.
@@ -467,11 +504,11 @@ func Run(eng *engine.Engine, cfg *config.File) error {
 
 	if err := (MainWindow{
 		AssignTo:           &mw.MainWindow,
-		Title:              i18n.T("app.title"),
+		Title:              i18n.T("app.title") + "  " + buildinfo.Version,
 		RightToLeftLayout:  i18n.IsRTL(), // mirror the whole layout for RTL languages
 		RightToLeftReading: i18n.IsRTL(),
-		MinSize:            Size{Width: 400, Height: 376},
-		Size:               Size{Width: 440, Height: 448},
+		MinSize:            Size{Width: 400, Height: 408},
+		Size:               Size{Width: 440, Height: 480},
 		Layout:             VBox{Spacing: 6},
 		Children: []Widget{
 			Composite{
@@ -539,6 +576,13 @@ func Run(eng *engine.Engine, cfg *config.File) error {
 					PushButton{Text: i18n.T("btn.toggle"), OnClicked: mw.onToggleEnabled},
 				},
 			},
+			Composite{
+				Layout: HBox{MarginsZero: true},
+				Children: []Widget{
+					CheckBox{AssignTo: &mw.cbAutostart, Text: i18n.T("chk.autostart"), OnCheckedChanged: mw.onAutostartToggled},
+					HSpacer{},
+				},
+			},
 			Label{Text: i18n.T("footer")},
 		},
 	}).Create(); err != nil {
@@ -556,6 +600,8 @@ func Run(eng *engine.Engine, cfg *config.File) error {
 	mw.cbLang.SetCurrentIndex(i18n.IndexOf(mw.lang))
 	mw.langReady = true // enable the language handler only after the initial value
 	mw.leTargets.SetText(strings.Join(mw.targets, ", "))
+	mw.cbAutostart.SetChecked(autostart.Enabled())
+	mw.autostartReady = true
 
 	mw.SetIcon(appIcon())
 
