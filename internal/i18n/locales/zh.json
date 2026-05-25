@@ -1,6 +1,8 @@
 {
   "app.title": "TurboKey 按键连发",
   "master": "总开关 (F8)",
+  "lbl.lang": "语言",
+  "lang.auto": "自动",
   "status.on": "状态: 运行中",
   "status.off": "状态: 已停用",
   "col.name": "名称",

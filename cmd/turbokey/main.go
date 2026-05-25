@@ -16,16 +16,16 @@ func main() {
 	// Pin the GUI to a single OS thread.
 	runtime.LockOSThread()
 
-	i18n.Init()
+	cfg, err := config.Load()
+	if err != nil {
+		cfg = &config.File{}
+	}
+
+	i18n.Init(cfg.Lang)
 
 	e := engine.New(0x77) // VK_F8 master toggle hotkey
 
-	rules, err := config.Load()
-	if err != nil {
-		rules = nil
-	}
-
-	if err := ui.Run(e, rules); err != nil {
+	if err := ui.Run(e, cfg); err != nil {
 		panic(err)
 	}
 }

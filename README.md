@@ -115,13 +115,16 @@ Notes:
 
 ## Language
 
-The UI is localized. The active language is chosen from the `TURBOKEY_LANG`
-environment variable (`zh` or `en`); if unset, it follows the Windows UI language
-(Chinese → `zh`, otherwise → `en`).
+Pick the language from the dropdown in the top-right of the window (Auto / 中文 /
+English). The choice is saved to `config.json` and the app relaunches to apply it;
+"Auto" follows the Windows UI language.
 
-Message catalogs are plain JSON under `internal/i18n/locales/` and embedded into
-the binary with `go:embed`. To add a language, drop in `internal/i18n/locales/<code>.json`
-(copy `en.json` and translate the values) and rebuild.
+Resolution order: the `TURBOKEY_LANG` environment variable (`zh`/`en`), then the
+saved choice, then the OS language.
+
+Message catalogs are plain JSON under `internal/i18n/locales/`, embedded with
+`go:embed`. To add a language, drop in `internal/i18n/locales/<code>.json` (copy
+`en.json` and translate the values) and rebuild.
 
 ## Caveats
 

@@ -4,6 +4,9 @@
 package ui
 
 import (
+	"os"
+	"os/exec"
+	"path/filepath"
 	"sync/atomic"
 
 	"github.com/lxn/walk"
@@ -59,6 +62,7 @@ type mainWindow struct {
 	tv         *walk.TableView
 	cbMaster   *walk.CheckBox
 	lblStatus  *walk.Label
+	cbLang     *walk.ComboBox
 	leName     *walk.LineEdit
 	cbTrigger  *walk.ComboBox
 	cbOutput   *walk.ComboBox
@@ -68,9 +72,11 @@ type mainWindow struct {
 	ni         *walk.NotifyIcon // system tray icon; nil if tray setup failed
 	trayMaster *walk.Action     // checkable master toggle in the tray menu
 
-	applyingMaster int32 // guard: suppress checkbox handler during programmatic updates
-	exiting        bool  // true once the user chose Exit, so close is not redirected to tray
-	toldTray       bool  // whether the "minimized to tray" balloon was already shown
+	lang           string // selected language code: "" (auto) | "zh" | "en"
+	langReady      bool   // true once the language combo's initial value is set
+	applyingMaster int32  // guard: suppress checkbox handler during programmatic updates
+	exiting        bool   // true once the user chose Exit, so close is not redirected to tray
+	toldTray       bool   // whether the "minimized to tray" balloon was already shown
 }
 
 func copyRules(in []*config.Rule) []*config.Rule {
@@ -86,7 +92,7 @@ func copyRules(in []*config.Rule) []*config.Rule {
 // persists them to disk.
 func (mw *mainWindow) apply() {
 	mw.eng.SetRules(copyRules(mw.model.rules))
-	config.Save(mw.model.rules)
+	config.Save(&config.File{Lang: mw.lang, Rules: mw.model.rules})
 }
 
 func (mw *mainWindow) updateStatus(on bool) {
@@ -172,6 +178,56 @@ func (mw *mainWindow) onToggleEnabled() {
 	mw.apply()
 }
 
+// langIndex / langCode map between the language combo position and the stored
+// code ("" auto, "zh", "en").
+func langIndex(code string) int {
+	switch code {
+	case "zh":
+		return 1
+	case "en":
+		return 2
+	default:
+		return 0
+	}
+}
+
+func langCode(index int) string {
+	switch index {
+	case 1:
+		return "zh"
+	case 2:
+		return "en"
+	default:
+		return ""
+	}
+}
+
+// onLangChanged persists the chosen language and relaunches so the whole UI is
+// rebuilt in it. Ignored during the initial programmatic selection.
+func (mw *mainWindow) onLangChanged() {
+	if !mw.langReady {
+		return
+	}
+	code := langCode(mw.cbLang.CurrentIndex())
+	if code == mw.lang {
+		return
+	}
+	mw.lang = code
+	config.Save(&config.File{Lang: mw.lang, Rules: mw.model.rules})
+	mw.relaunch()
+}
+
+// relaunch starts a fresh instance (inheriting this elevated process's rights,
+// so no new UAC prompt) and exits the current one.
+func (mw *mainWindow) relaunch() {
+	if exe, err := os.Executable(); err == nil {
+		cmd := exec.Command(exe)
+		cmd.Dir = filepath.Dir(exe)
+		cmd.Start()
+	}
+	mw.exit()
+}
+
 // restore shows and activates the main window (e.g. from the tray).
 func (mw *mainWindow) restore() {
 	mw.Show()
@@ -235,9 +291,9 @@ func (mw *mainWindow) setupTray() {
 
 // Run builds the window, wires it to the engine, starts the hook, and runs the
 // GUI message loop until the window closes.
-func Run(eng *engine.Engine, initialRules []*config.Rule) error {
-	model := &ruleModel{rules: initialRules}
-	mw := &mainWindow{eng: eng, model: model}
+func Run(eng *engine.Engine, cfg *config.File) error {
+	model := &ruleModel{rules: cfg.Rules}
+	mw := &mainWindow{eng: eng, model: model, lang: cfg.Lang}
 
 	outputNames := append([]string{i18n.T("output.same")}, keys.Names...)
 
@@ -258,6 +314,13 @@ func Run(eng *engine.Engine, initialRules []*config.Rule) error {
 					},
 					Label{AssignTo: &mw.lblStatus, Text: i18n.T("status.off")},
 					HSpacer{},
+					Label{Text: i18n.T("lbl.lang")},
+					ComboBox{
+						AssignTo:              &mw.cbLang,
+						Model:                 []string{i18n.T("lang.auto"), "中文", "English"},
+						OnCurrentIndexChanged: mw.onLangChanged,
+						MinSize:               Size{Width: 96},
+					},
 				},
 			},
 			TableView{
@@ -310,6 +373,8 @@ func Run(eng *engine.Engine, initialRules []*config.Rule) error {
 	mw.cbTrigger.SetCurrentIndex(0)
 	mw.cbOutput.SetCurrentIndex(0)
 	mw.cbMode.SetCurrentIndex(0)
+	mw.cbLang.SetCurrentIndex(langIndex(mw.lang))
+	mw.langReady = true // enable the language handler only after the initial value
 
 	mw.SetIcon(walk.IconApplication())
 
@@ -328,7 +393,7 @@ func Run(eng *engine.Engine, initialRules []*config.Rule) error {
 		}
 	})
 
-	eng.SetRules(copyRules(initialRules))
+	eng.SetRules(copyRules(cfg.Rules))
 	eng.Start()
 
 	mw.Run()

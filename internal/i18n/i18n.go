@@ -48,16 +48,22 @@ func init() {
 	}
 }
 
-// Init selects the active language. Call once at startup before building the UI.
-func Init() {
-	switch os.Getenv("TURBOKEY_LANG") {
-	case "zh":
-		current = ZH
-	case "en":
-		current = EN
-	default:
-		current = detectOS()
+// Init selects the active language, in priority order: the TURBOKEY_LANG
+// environment variable, then pref (e.g. the saved config language), then the
+// Windows UI language. An empty/unknown value falls through to the next source.
+// Call once at startup before building the UI.
+func Init(pref string) {
+	for _, code := range []string{os.Getenv("TURBOKEY_LANG"), pref} {
+		switch code {
+		case "zh":
+			current = ZH
+			return
+		case "en":
+			current = EN
+			return
+		}
 	}
+	current = detectOS()
 }
 
 // Current returns the active language.

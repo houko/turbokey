@@ -4,6 +4,7 @@
 package config
 
 import (
+	"bytes"
 	"encoding/json"
 	"os"
 	"path/filepath"
@@ -40,6 +41,13 @@ func (r *Rule) EffectiveOutputVK() uint16 {
 	return r.OutputVK
 }
 
+// File is the persisted configuration: rules plus an optional UI language code
+// ("" = follow the OS, otherwise "zh" / "en").
+type File struct {
+	Lang  string
+	Rules []*Rule
+}
+
 // --- JSON serialization (human-readable, keyed by key name) ---
 
 type ruleDTO struct {
@@ -52,6 +60,7 @@ type ruleDTO struct {
 }
 
 type configDTO struct {
+	Lang  string    `json:"lang,omitempty"`
 	Rules []ruleDTO `json:"rules"`
 }
 
@@ -63,16 +72,18 @@ func path() string {
 	return filepath.Join(filepath.Dir(exe), "config.json")
 }
 
-// Load reads rules from config.json next to the executable. A missing file
-// yields an empty slice, not an error.
-func Load() ([]*Rule, error) {
+// Load reads the config next to the executable. A missing file yields an empty
+// config, not an error.
+func Load() (*File, error) {
 	data, err := os.ReadFile(path())
 	if err != nil {
 		if os.IsNotExist(err) {
-			return nil, nil
+			return &File{}, nil
 		}
 		return nil, err
 	}
+	// Tolerate a UTF-8 BOM (e.g. from editing config.json in Notepad).
+	data = bytes.TrimPrefix(data, []byte{0xEF, 0xBB, 0xBF})
 	var dto configDTO
 	if err := json.Unmarshal(data, &dto); err != nil {
 		return nil, err
@@ -104,13 +115,13 @@ func Load() ([]*Rule, error) {
 			Enabled:    d.Enabled,
 		})
 	}
-	return rules, nil
+	return &File{Lang: dto.Lang, Rules: rules}, nil
 }
 
-// Save writes rules to config.json next to the executable.
-func Save(rules []*Rule) error {
-	dto := configDTO{Rules: make([]ruleDTO, 0, len(rules))}
-	for _, r := range rules {
+// Save writes the config to config.json next to the executable.
+func Save(f *File) error {
+	dto := configDTO{Lang: f.Lang, Rules: make([]ruleDTO, 0, len(f.Rules))}
+	for _, r := range f.Rules {
 		out := ""
 		if r.OutputVK != 0 {
 			out = keys.Name(r.OutputVK)

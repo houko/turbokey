@@ -1,6 +1,8 @@
 {
   "app.title": "TurboKey",
   "master": "Master (F8)",
+  "lbl.lang": "Lang",
+  "lang.auto": "Auto",
   "status.on": "Status: running",
   "status.off": "Status: stopped",
   "col.name": "Name",
