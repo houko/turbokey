@@ -23,7 +23,7 @@ is held briefly so poll-based games reliably sample it.
   running). Left-click the tray icon to restore it; right-click for a menu to
   show the window, toggle the master switch, or quit.
 - Rules are saved to `config.json` next to the executable and reloaded on start.
-- Localized UI (English / Chinese), auto-detected from the OS language.
+- Localized UI in 11 languages, auto-detected from the OS, with an in-app picker.
 - The tool filters out its own synthetic input, so it never re-triggers itself.
 
 ## How it works
@@ -115,9 +115,12 @@ Notes:
 
 ## Language
 
-Pick the language from the dropdown in the top-right of the window (Auto / 中文 /
-English). The choice is saved to `config.json` and the app relaunches to apply it;
-"Auto" follows the Windows UI language.
+Pick the language from the dropdown in the top-right of the window. The choice is
+saved to `config.json` and the app relaunches to apply it; "Auto" follows the
+Windows UI language.
+
+Bundled languages: English, 简体中文, 繁體中文, 日本語, 한국어, Español, Français,
+Deutsch, Русский, Português, Italiano.
 
 Resolution order: the `TURBOKEY_LANG` environment variable (`zh`/`en`), then the
 saved choice, then the OS language.

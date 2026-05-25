@@ -178,37 +178,13 @@ func (mw *mainWindow) onToggleEnabled() {
 	mw.apply()
 }
 
-// langIndex / langCode map between the language combo position and the stored
-// code ("" auto, "zh", "en").
-func langIndex(code string) int {
-	switch code {
-	case "zh":
-		return 1
-	case "en":
-		return 2
-	default:
-		return 0
-	}
-}
-
-func langCode(index int) string {
-	switch index {
-	case 1:
-		return "zh"
-	case 2:
-		return "en"
-	default:
-		return ""
-	}
-}
-
 // onLangChanged persists the chosen language and relaunches so the whole UI is
 // rebuilt in it. Ignored during the initial programmatic selection.
 func (mw *mainWindow) onLangChanged() {
 	if !mw.langReady {
 		return
 	}
-	code := langCode(mw.cbLang.CurrentIndex())
+	code := i18n.CodeAt(mw.cbLang.CurrentIndex())
 	if code == mw.lang {
 		return
 	}
@@ -317,9 +293,9 @@ func Run(eng *engine.Engine, cfg *config.File) error {
 					Label{Text: i18n.T("lbl.lang")},
 					ComboBox{
 						AssignTo:              &mw.cbLang,
-						Model:                 []string{i18n.T("lang.auto"), "中文", "English"},
+						Model:                 i18n.DisplayNames(),
 						OnCurrentIndexChanged: mw.onLangChanged,
-						MinSize:               Size{Width: 96},
+						MinSize:               Size{Width: 110},
 					},
 				},
 			},
@@ -373,7 +349,7 @@ func Run(eng *engine.Engine, cfg *config.File) error {
 	mw.cbTrigger.SetCurrentIndex(0)
 	mw.cbOutput.SetCurrentIndex(0)
 	mw.cbMode.SetCurrentIndex(0)
-	mw.cbLang.SetCurrentIndex(langIndex(mw.lang))
+	mw.cbLang.SetCurrentIndex(i18n.IndexOf(mw.lang))
 	mw.langReady = true // enable the language handler only after the initial value
 
 	mw.SetIcon(walk.IconApplication())
