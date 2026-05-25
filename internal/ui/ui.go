@@ -11,6 +11,7 @@ import (
 
 	"turbokey/internal/config"
 	"turbokey/internal/engine"
+	"turbokey/internal/i18n"
 	"turbokey/internal/keys"
 )
 
@@ -31,14 +32,14 @@ func (m *ruleModel) Value(row, col int) interface{} {
 		return keys.Name(r.TriggerVK)
 	case 2:
 		if r.OutputVK == 0 {
-			return "(同触发键)"
+			return i18n.T("output.same")
 		}
 		return keys.Name(r.OutputVK)
 	case 3:
 		if r.Mode == config.ModeToggle {
-			return "开关"
+			return i18n.T("mode.toggle")
 		}
-		return "按住"
+		return i18n.T("mode.hold")
 	case 4:
 		return r.IntervalMs
 	case 5:
@@ -90,9 +91,9 @@ func (mw *mainWindow) apply() {
 
 func (mw *mainWindow) updateStatus(on bool) {
 	if on {
-		mw.lblStatus.SetText("状态: 运行中")
+		mw.lblStatus.SetText(i18n.T("status.on"))
 	} else {
-		mw.lblStatus.SetText("状态: 已停用")
+		mw.lblStatus.SetText(i18n.T("status.off"))
 	}
 }
 
@@ -182,7 +183,7 @@ func (mw *mainWindow) hideToTray() {
 	mw.Hide()
 	if !mw.toldTray && mw.ni != nil {
 		mw.toldTray = true
-		mw.ni.ShowInfo("TurboKey", "已最小化到系统托盘。右键托盘图标可退出。")
+		mw.ni.ShowInfo(i18n.T("tray.balloon.title"), i18n.T("tray.balloon.body"))
 	}
 }
 
@@ -204,21 +205,21 @@ func (mw *mainWindow) setupTray() {
 	}
 	mw.ni = ni
 	ni.SetIcon(walk.IconApplication())
-	ni.SetToolTip("TurboKey 按键连发")
+	ni.SetToolTip(i18n.T("tray.tooltip"))
 
 	showAct := walk.NewAction()
-	showAct.SetText("显示主界面")
+	showAct.SetText(i18n.T("tray.show"))
 	showAct.Triggered().Attach(mw.restore)
 	ni.ContextMenu().Actions().Add(showAct)
 
 	mw.trayMaster = walk.NewAction()
-	mw.trayMaster.SetText("启用连发 (F8)")
+	mw.trayMaster.SetText(i18n.T("tray.master"))
 	mw.trayMaster.SetCheckable(true)
 	mw.trayMaster.Triggered().Attach(func() { mw.applyMaster(mw.trayMaster.Checked()) })
 	ni.ContextMenu().Actions().Add(mw.trayMaster)
 
 	exitAct := walk.NewAction()
-	exitAct.SetText("退出")
+	exitAct.SetText(i18n.T("tray.exit"))
 	exitAct.Triggered().Attach(mw.exit)
 	ni.ContextMenu().Actions().Add(exitAct)
 
@@ -238,11 +239,11 @@ func Run(eng *engine.Engine, initialRules []*config.Rule) error {
 	model := &ruleModel{rules: initialRules}
 	mw := &mainWindow{eng: eng, model: model}
 
-	outputNames := append([]string{"(同触发键)"}, keys.Names...)
+	outputNames := append([]string{i18n.T("output.same")}, keys.Names...)
 
 	if err := (MainWindow{
 		AssignTo: &mw.MainWindow,
-		Title:    "TurboKey 按键连发",
+		Title:    i18n.T("app.title"),
 		MinSize:  Size{Width: 400, Height: 340},
 		Size:     Size{Width: 430, Height: 410},
 		Layout:   VBox{Spacing: 6},
@@ -252,22 +253,22 @@ func Run(eng *engine.Engine, initialRules []*config.Rule) error {
 				Children: []Widget{
 					CheckBox{
 						AssignTo:         &mw.cbMaster,
-						Text:             "总开关 (F8)",
+						Text:             i18n.T("master"),
 						OnCheckedChanged: mw.onMasterToggled,
 					},
-					Label{AssignTo: &mw.lblStatus, Text: "状态: 已停用"},
+					Label{AssignTo: &mw.lblStatus, Text: i18n.T("status.off")},
 					HSpacer{},
 				},
 			},
 			TableView{
 				AssignTo: &mw.tv,
 				Columns: []TableViewColumn{
-					{Title: "名称", Width: 84},
-					{Title: "触发", Width: 52},
-					{Title: "输出", Width: 72},
-					{Title: "模式", Width: 50},
-					{Title: "间隔", Width: 52},
-					{Title: "启用", Width: 40},
+					{Title: i18n.T("col.name"), Width: 84},
+					{Title: i18n.T("col.trigger"), Width: 52},
+					{Title: i18n.T("col.output"), Width: 72},
+					{Title: i18n.T("col.mode"), Width: 50},
+					{Title: i18n.T("col.interval"), Width: 52},
+					{Title: i18n.T("col.enabled"), Width: 40},
 				},
 				Model:           model,
 				OnItemActivated: mw.onToggleEnabled,
@@ -275,27 +276,27 @@ func Run(eng *engine.Engine, initialRules []*config.Rule) error {
 			Composite{
 				Layout: Grid{Columns: 2, Spacing: 6, MarginsZero: true},
 				Children: []Widget{
-					Label{Text: "名称"},
+					Label{Text: i18n.T("lbl.name")},
 					LineEdit{AssignTo: &mw.leName, MaxLength: 20},
-					Label{Text: "触发键"},
+					Label{Text: i18n.T("lbl.trigger")},
 					ComboBox{AssignTo: &mw.cbTrigger, Model: keys.Names},
-					Label{Text: "输出键"},
+					Label{Text: i18n.T("lbl.output")},
 					ComboBox{AssignTo: &mw.cbOutput, Model: outputNames},
-					Label{Text: "模式"},
-					ComboBox{AssignTo: &mw.cbMode, Model: []string{"按住连发", "开关连发"}},
-					Label{Text: "间隔(ms)"},
+					Label{Text: i18n.T("lbl.mode")},
+					ComboBox{AssignTo: &mw.cbMode, Model: []string{i18n.T("mode.hold"), i18n.T("mode.toggle")}},
+					Label{Text: i18n.T("lbl.interval")},
 					NumberEdit{AssignTo: &mw.neInterval, Decimals: 0},
 				},
 			},
 			Composite{
 				Layout: HBox{Spacing: 6, MarginsZero: true},
 				Children: []Widget{
-					PushButton{Text: "添加", OnClicked: mw.onAdd},
-					PushButton{Text: "删除选中", OnClicked: mw.onDelete},
-					PushButton{Text: "启用/停用", OnClicked: mw.onToggleEnabled},
+					PushButton{Text: i18n.T("btn.add"), OnClicked: mw.onAdd},
+					PushButton{Text: i18n.T("btn.delete"), OnClicked: mw.onDelete},
+					PushButton{Text: i18n.T("btn.toggle"), OnClicked: mw.onToggleEnabled},
 				},
 			},
-			Label{Text: "双击行可启停 · 关闭窗口即最小化到托盘"},
+			Label{Text: i18n.T("footer")},
 		},
 	}).Create(); err != nil {
 		return err

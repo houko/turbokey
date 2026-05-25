@@ -37,11 +37,13 @@ func init() {
 	for i := 0; i < 12; i++ {
 		defs = append(defs, keyDef{name: fmt.Sprintf("F%d", i+1), vk: uint16(0x70 + i)})
 	}
-	// Common control / whitespace keys; arrow keys are extended.
+	// Common control / whitespace keys; arrow keys are extended. Names are kept
+	// language-neutral (English / symbols) because they are also the stable
+	// identifiers persisted in config.json.
 	defs = append(defs,
-		keyDef{name: "空格", vk: 0x20},
-		keyDef{name: "回车", vk: 0x0D},
-		keyDef{name: "ESC", vk: 0x1B},
+		keyDef{name: "Space", vk: 0x20},
+		keyDef{name: "Enter", vk: 0x0D},
+		keyDef{name: "Esc", vk: 0x1B},
 		keyDef{name: "Tab", vk: 0x09},
 		keyDef{name: "↑", vk: 0x26, ext: true},
 		keyDef{name: "↓", vk: 0x28, ext: true},

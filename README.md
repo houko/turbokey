@@ -23,6 +23,7 @@ is held briefly so poll-based games reliably sample it.
   running). Left-click the tray icon to restore it; right-click for a menu to
   show the window, toggle the master switch, or quit.
 - Rules are saved to `config.json` next to the executable and reloaded on start.
+- Localized UI (English / Chinese), auto-detected from the OS language.
 - The tool filters out its own synthetic input, so it never re-triggers itself.
 
 ## How it works
@@ -69,6 +70,7 @@ GOOS=windows GOARCH=amd64 CGO_ENABLED=0 \
 ```
 cmd/turbokey/      entry point (main) + Windows application manifest
 internal/keys/     key table; display-name <-> virtual-key-code mapping
+internal/i18n/     UI localization; embedded JSON message catalogs (locales/)
 internal/config/   rule model and config.json load/save
 internal/winput/   Win32 wrappers: low-level keyboard hook + SendInput
 internal/engine/   rapid-fire engine: hook callback, master switch, workers
@@ -107,8 +109,19 @@ Notes:
 
 - `output: ""` means "same as the trigger key".
 - `mode`: `"hold"` or `"toggle"`.
-- Key names: `A`–`Z`, `0`–`9`, `F1`–`F12`, `空格`, `回车`, `ESC`, `Tab`,
-  `↑ ↓ ← →`, `Ctrl`, `Alt`, `Shift`.
+- Key names: `A`–`Z`, `0`–`9`, `F1`–`F12`, `Space`, `Enter`, `Esc`, `Tab`,
+  `↑ ↓ ← →`, `Ctrl`, `Alt`, `Shift`. (These are language-neutral identifiers and
+  are not translated, so the config stays valid across UI languages.)
+
+## Language
+
+The UI is localized. The active language is chosen from the `TURBOKEY_LANG`
+environment variable (`zh` or `en`); if unset, it follows the Windows UI language
+(Chinese → `zh`, otherwise → `en`).
+
+Message catalogs are plain JSON under `internal/i18n/locales/` and embedded into
+the binary with `go:embed`. To add a language, drop in `internal/i18n/locales/<code>.json`
+(copy `en.json` and translate the values) and rebuild.
 
 ## Caveats
 
