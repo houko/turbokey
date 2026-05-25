@@ -15,12 +15,18 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"turbokey/internal/buildinfo"
 )
 
 const (
 	apiURL    = "https://api.github.com/repos/houko/turbokey/releases/latest"
 	assetName = "turbokey.exe"
 )
+
+// userAgent identifies the client to GitHub's API. GitHub returns 403 for the
+// default Go-http-client UA, so we must send something app-specific.
+func userAgent() string { return "TurboKey/" + buildinfo.Version }
 
 // Release is the trimmed view of a GitHub release we care about.
 type Release struct {
@@ -38,6 +44,7 @@ func Latest() (*Release, error) {
 		return nil, err
 	}
 	req.Header.Set("Accept", "application/vnd.github+json")
+	req.Header.Set("User-Agent", userAgent())
 	resp, err := client.Do(req)
 	if err != nil {
 		return nil, err
@@ -93,7 +100,12 @@ func (p *progressReader) Read(b []byte) (int, error) {
 // from a non-UI thread.
 func Download(url, dest string, onProgress func(read, total int64)) error {
 	client := &http.Client{Timeout: 5 * time.Minute}
-	resp, err := client.Get(url)
+	req, err := http.NewRequest("GET", url, nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Set("User-Agent", userAgent())
+	resp, err := client.Do(req)
 	if err != nil {
 		return err
 	}
