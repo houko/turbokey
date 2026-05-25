@@ -33,6 +33,12 @@
   "btn.update": "수정",
   "chk.autostart": "Windows 시작 시 실행",
   "msg.dupTrigger": "이 트리거 키는 다른 규칙에서 이미 사용 중입니다.",
+  "tray.checkUpdates": "업데이트 확인",
+  "tray.about": "정보",
+  "update.failed": "업데이트를 확인할 수 없습니다. 나중에 다시 시도하세요.",
+  "update.uptodate": "최신 버전입니다 (%s).",
+  "update.available": "새 버전이 있습니다: %s (현재 %s).\n릴리스 페이지를 열까요?",
+  "about.body": "TurboKey %s\n\n키 연타 도구\nhttps://github.com/houko/turbokey\nMIT 라이선스",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "트레이로 최소화되었습니다. 아이콘을 우클릭하여 종료하세요."
 }

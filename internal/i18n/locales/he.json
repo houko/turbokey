@@ -33,6 +33,12 @@
   "btn.update": "עדכון",
   "chk.autostart": "הפעלה עם Windows",
   "msg.dupTrigger": "מקש ההפעלה הזה כבר בשימוש בכלל אחר.",
+  "tray.checkUpdates": "בדוק עדכונים",
+  "tray.about": "אודות",
+  "update.failed": "לא ניתן לבדוק עדכונים. נסה שוב מאוחר יותר.",
+  "update.uptodate": "אתה בגרסה העדכנית ביותר (%s).",
+  "update.available": "גרסה חדשה זמינה: %s (אצלך %s).\nלפתוח את עמוד הגרסאות?",
+  "about.body": "TurboKey %s\n\nכלי לחיצה אוטומטית\nhttps://github.com/houko/turbokey\nרישיון MIT",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "מוזער למגש המערכת. לחץ לחיצה ימנית על הסמל כדי לצאת."
 }

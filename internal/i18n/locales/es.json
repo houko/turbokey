@@ -33,6 +33,12 @@
   "btn.update": "Actualizar",
   "chk.autostart": "Iniciar con Windows",
   "msg.dupTrigger": "Otra regla ya usa esta tecla de activación.",
+  "tray.checkUpdates": "Buscar actualizaciones",
+  "tray.about": "Acerca de",
+  "update.failed": "No se pudo buscar actualizaciones. Inténtalo más tarde.",
+  "update.uptodate": "Tienes la versión más reciente (%s).",
+  "update.available": "Nueva versión disponible: %s (tienes %s).\n¿Abrir la página de Releases?",
+  "about.body": "TurboKey %s\n\nHerramienta de pulsación automática\nhttps://github.com/houko/turbokey\nLicencia MIT",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "Minimizado a la bandeja. Clic derecho en el icono para salir."
 }

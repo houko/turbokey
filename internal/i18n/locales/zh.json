@@ -33,6 +33,12 @@
   "btn.update": "更新",
   "chk.autostart": "开机自启",
   "msg.dupTrigger": "已有规则使用了这个触发键。",
+  "tray.checkUpdates": "检测更新",
+  "tray.about": "关于",
+  "update.failed": "无法检查更新, 请稍后再试。",
+  "update.uptodate": "已是最新版本 (%s)。",
+  "update.available": "有新版本: %s (当前 %s)。\n打开发布页面?",
+  "about.body": "TurboKey %s\n\n按键连发工具\nhttps://github.com/houko/turbokey\nMIT 许可证",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "已最小化到系统托盘。右键托盘图标可退出。"
 }

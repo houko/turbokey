@@ -33,6 +33,12 @@
   "btn.update": "更新",
   "chk.autostart": "開機自啟",
   "msg.dupTrigger": "已有規則使用了這個觸發鍵。",
+  "tray.checkUpdates": "檢查更新",
+  "tray.about": "關於",
+  "update.failed": "無法檢查更新, 請稍後再試。",
+  "update.uptodate": "已是最新版本 (%s)。",
+  "update.available": "有新版本: %s (目前 %s)。\n開啟發布頁面?",
+  "about.body": "TurboKey %s\n\n按鍵連發工具\nhttps://github.com/houko/turbokey\nMIT 授權",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "已最小化到系統匣。右鍵圖示可結束。"
 }

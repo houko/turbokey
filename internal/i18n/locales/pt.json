@@ -33,6 +33,12 @@
   "btn.update": "Atualizar",
   "chk.autostart": "Iniciar com o Windows",
   "msg.dupTrigger": "Outra regra já usa esta tecla de gatilho.",
+  "tray.checkUpdates": "Verificar atualizações",
+  "tray.about": "Sobre",
+  "update.failed": "Não foi possível verificar atualizações. Tente mais tarde.",
+  "update.uptodate": "Você está na versão mais recente (%s).",
+  "update.available": "Nova versão disponível: %s (você tem %s).\nAbrir a página de Releases?",
+  "about.body": "TurboKey %s\n\nFerramenta de disparo automático\nhttps://github.com/houko/turbokey\nLicença MIT",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "Minimizado para a bandeja. Clique com o botão direito no ícone para sair."
 }

@@ -6,6 +6,7 @@ package ui
 import (
 	"bytes"
 	_ "embed"
+	"fmt"
 	"image"
 	_ "image/png"
 	"os"
@@ -24,6 +25,7 @@ import (
 	"turbokey/internal/i18n"
 	"turbokey/internal/keys"
 	"turbokey/internal/singleton"
+	"turbokey/internal/updater"
 	"turbokey/internal/winput"
 )
 
@@ -530,6 +532,39 @@ func (mw *mainWindow) exit() {
 	mw.Close()
 }
 
+// openURL opens the given URL in the user's default browser via the Windows
+// shell. Errors are ignored on purpose: this is a best-effort convenience.
+func openURL(url string) {
+	_ = exec.Command("rundll32", "url.dll,FileProtocolHandler", url).Start()
+}
+
+// onCheckUpdates queries the GitHub Releases API on a background goroutine and
+// shows a message box on the UI thread with the result.
+func (mw *mainWindow) onCheckUpdates() {
+	go func() {
+		rel, err := updater.Latest()
+		mw.Synchronize(func() {
+			if err != nil {
+				walk.MsgBox(mw, "TurboKey", i18n.T("update.failed"), walk.MsgBoxIconWarning)
+				return
+			}
+			if rel.Tag == buildinfo.Version {
+				walk.MsgBox(mw, "TurboKey", fmt.Sprintf(i18n.T("update.uptodate"), buildinfo.Version), walk.MsgBoxIconInformation)
+				return
+			}
+			msg := fmt.Sprintf(i18n.T("update.available"), rel.Tag, buildinfo.Version)
+			if walk.MsgBox(mw, "TurboKey", msg, walk.MsgBoxOKCancel|walk.MsgBoxIconQuestion) == walk.DlgCmdOK {
+				openURL(rel.URL)
+			}
+		})
+	}()
+}
+
+// onAbout shows a small "About" dialog with the version and project link.
+func (mw *mainWindow) onAbout() {
+	walk.MsgBox(mw, "TurboKey", fmt.Sprintf(i18n.T("about.body"), buildinfo.Version), walk.MsgBoxIconInformation)
+}
+
 // setupTray installs the system-tray icon and its context menu. On failure the
 // app simply runs without a tray (mw.ni stays nil).
 func (mw *mainWindow) setupTray() {
@@ -551,6 +586,20 @@ func (mw *mainWindow) setupTray() {
 	mw.trayMaster.SetCheckable(true)
 	mw.trayMaster.Triggered().Attach(func() { mw.applyMaster(mw.trayMaster.Checked()) })
 	ni.ContextMenu().Actions().Add(mw.trayMaster)
+
+	ni.ContextMenu().Actions().Add(walk.NewSeparatorAction())
+
+	updAct := walk.NewAction()
+	updAct.SetText(i18n.T("tray.checkUpdates"))
+	updAct.Triggered().Attach(mw.onCheckUpdates)
+	ni.ContextMenu().Actions().Add(updAct)
+
+	aboutAct := walk.NewAction()
+	aboutAct.SetText(i18n.T("tray.about"))
+	aboutAct.Triggered().Attach(mw.onAbout)
+	ni.ContextMenu().Actions().Add(aboutAct)
+
+	ni.ContextMenu().Actions().Add(walk.NewSeparatorAction())
 
 	exitAct := walk.NewAction()
 	exitAct.SetText(i18n.T("tray.exit"))

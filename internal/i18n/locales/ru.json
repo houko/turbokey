@@ -33,6 +33,12 @@
   "btn.update": "Обновить",
   "chk.autostart": "Запуск с Windows",
   "msg.dupTrigger": "Эта клавиша-триггер уже используется другим правилом.",
+  "tray.checkUpdates": "Проверить обновления",
+  "tray.about": "О программе",
+  "update.failed": "Не удалось проверить обновления. Повторите позже.",
+  "update.uptodate": "У вас последняя версия (%s).",
+  "update.available": "Доступна новая версия: %s (у вас %s).\nОткрыть страницу релизов?",
+  "about.body": "TurboKey %s\n\nИнструмент автонажатия\nhttps://github.com/houko/turbokey\nЛицензия MIT",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "Свёрнуто в трей. Щёлкните значок правой кнопкой, чтобы выйти."
 }

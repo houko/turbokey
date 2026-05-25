@@ -33,6 +33,12 @@
   "btn.update": "Aggiorna",
   "chk.autostart": "Avvia con Windows",
   "msg.dupTrigger": "Un'altra regola usa già questo tasto trigger.",
+  "tray.checkUpdates": "Cerca aggiornamenti",
+  "tray.about": "Informazioni",
+  "update.failed": "Impossibile cercare aggiornamenti. Riprova più tardi.",
+  "update.uptodate": "Hai la versione più recente (%s).",
+  "update.available": "Nuova versione disponibile: %s (hai %s).\nAprire la pagina Releases?",
+  "about.body": "TurboKey %s\n\nStrumento di pressione automatica\nhttps://github.com/houko/turbokey\nLicenza MIT",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "Ridotto nella tray. Clic destro sull'icona per uscire."
 }
