@@ -30,6 +30,7 @@
   "lbl.scope": "生效程序(空=全部)",
   "btn.capture": "选择程序…",
   "btn.ok": "确定",
+  "btn.update": "更新",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "已最小化到系统托盘。右键托盘图标可退出。"
 }

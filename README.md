@@ -83,11 +83,12 @@ internal/ui/       native Win32 GUI (lxn/walk)
 ## Usage
 
 1. Launch `turbokey.exe` and accept the UAC prompt.
-2. In the bottom row, pick **trigger key**, **output key** (`(同触发键)` = same as
-   trigger), **mode**, and **interval (ms)**, then click **添加规则** (Add rule).
-3. Press **F8** (or tick the master switch) to enable. Double-click a row to
-   enable/disable it.
-4. Press your trigger key to fire. Press **F8** again when you are done.
+2. In the editor, pick a **trigger key**, **output key** (default = same as
+   trigger), **mode**, and **interval (ms)**, then click **Add**.
+3. To change a rule, click it (its values load into the editor), edit, and click
+   **Update**. Double-click a row to enable/disable it; **Delete** removes it.
+4. Press **F8** (or tick the master switch) to enable, then press your trigger
+   key to fire. Press **F8** again when you are done.
 
 Notes:
 - The interval is the gap *between* presses; each press also holds the key ~30ms,

@@ -80,3 +80,17 @@ func Name(vk uint16) string {
 func IsExtended(vk uint16) bool {
 	return vkExtended[vk]
 }
+
+// Index returns the position of a key in Names, or -1 if unknown.
+func Index(vk uint16) int {
+	name, ok := vkToName[vk]
+	if !ok {
+		return -1
+	}
+	for i, n := range Names {
+		if n == name {
+			return i
+		}
+	}
+	return -1
+}

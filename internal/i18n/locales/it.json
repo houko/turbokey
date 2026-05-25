@@ -30,6 +30,7 @@
   "lbl.scope": "App attive (vuoto = tutte)",
   "btn.capture": "Scegli app…",
   "btn.ok": "OK",
+  "btn.update": "Aggiorna",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "Ridotto nella tray. Clic destro sull'icona per uscire."
 }

@@ -30,6 +30,7 @@
   "lbl.scope": "적용 앱 (비우면 전체)",
   "btn.capture": "앱 선택…",
   "btn.ok": "확인",
+  "btn.update": "수정",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "트레이로 최소화되었습니다. 아이콘을 우클릭하여 종료하세요."
 }

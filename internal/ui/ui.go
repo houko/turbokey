@@ -212,10 +212,11 @@ func (mw *mainWindow) onMasterToggled() {
 	mw.applyMaster(mw.cbMaster.Checked())
 }
 
-func (mw *mainWindow) onAdd() {
+// editorRule builds a rule from the editor fields, or (nil,false) if invalid.
+func (mw *mainWindow) editorRule() (*config.Rule, bool) {
 	tvk, ok := keys.VK(mw.cbTrigger.Text())
 	if !ok {
-		return
+		return nil, false
 	}
 	var ovk uint16
 	if mw.cbOutput.CurrentIndex() > 0 {
@@ -229,16 +230,65 @@ func (mw *mainWindow) onAdd() {
 	if interval < 1 {
 		interval = 1
 	}
-	mw.model.rules = append(mw.model.rules, &config.Rule{
+	return &config.Rule{
 		Name:       mw.leName.Text(),
 		TriggerVK:  tvk,
 		OutputVK:   ovk,
 		Mode:       mode,
 		IntervalMs: interval,
 		Enabled:    true,
-	})
+	}, true
+}
+
+func (mw *mainWindow) onAdd() {
+	r, ok := mw.editorRule()
+	if !ok {
+		return
+	}
+	mw.model.rules = append(mw.model.rules, r)
 	mw.model.PublishRowsReset()
 	mw.apply()
+}
+
+// onUpdate overwrites the selected rule with the editor fields (keeping its
+// enabled state).
+func (mw *mainWindow) onUpdate() {
+	i := mw.tv.CurrentIndex()
+	if i < 0 || i >= len(mw.model.rules) {
+		return
+	}
+	r, ok := mw.editorRule()
+	if !ok {
+		return
+	}
+	r.Enabled = mw.model.rules[i].Enabled
+	mw.model.rules[i] = r
+	mw.model.PublishRowsReset()
+	mw.apply()
+}
+
+// onRuleSelected loads the selected rule into the editor fields for editing.
+func (mw *mainWindow) onRuleSelected() {
+	i := mw.tv.CurrentIndex()
+	if i < 0 || i >= len(mw.model.rules) {
+		return
+	}
+	r := mw.model.rules[i]
+	mw.leName.SetText(r.Name)
+	if idx := keys.Index(r.TriggerVK); idx >= 0 {
+		mw.cbTrigger.SetCurrentIndex(idx)
+	}
+	if r.OutputVK == 0 {
+		mw.cbOutput.SetCurrentIndex(0)
+	} else if idx := keys.Index(r.OutputVK); idx >= 0 {
+		mw.cbOutput.SetCurrentIndex(idx + 1)
+	}
+	if r.Mode == config.ModeToggle {
+		mw.cbMode.SetCurrentIndex(1)
+	} else {
+		mw.cbMode.SetCurrentIndex(0)
+	}
+	mw.neInterval.SetValue(float64(r.IntervalMs))
 }
 
 func (mw *mainWindow) onDelete() {
@@ -402,8 +452,9 @@ func Run(eng *engine.Engine, cfg *config.File) error {
 					{Title: i18n.T("col.interval"), Width: 52},
 					{Title: i18n.T("col.enabled"), Width: 40},
 				},
-				Model:           model,
-				OnItemActivated: mw.onToggleEnabled,
+				Model:                 model,
+				OnCurrentIndexChanged: mw.onRuleSelected,
+				OnItemActivated:       mw.onToggleEnabled,
 			},
 			Composite{
 				Layout: Grid{Columns: 2, Spacing: 6, MarginsZero: true},
@@ -424,6 +475,7 @@ func Run(eng *engine.Engine, cfg *config.File) error {
 				Layout: HBox{Spacing: 6, MarginsZero: true},
 				Children: []Widget{
 					PushButton{Text: i18n.T("btn.add"), OnClicked: mw.onAdd},
+					PushButton{Text: i18n.T("btn.update"), OnClicked: mw.onUpdate},
 					PushButton{Text: i18n.T("btn.delete"), OnClicked: mw.onDelete},
 					PushButton{Text: i18n.T("btn.toggle"), OnClicked: mw.onToggleEnabled},
 				},

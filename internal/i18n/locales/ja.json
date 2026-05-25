@@ -30,6 +30,7 @@
   "lbl.scope": "対象アプリ (空=全部)",
   "btn.capture": "アプリを選択…",
   "btn.ok": "OK",
+  "btn.update": "更新",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "トレイに最小化しました。アイコンを右クリックで終了します。"
 }

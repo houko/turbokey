@@ -30,6 +30,7 @@
   "lbl.scope": "Активные прил. (пусто = все)",
   "btn.capture": "Выбрать прил.…",
   "btn.ok": "ОК",
+  "btn.update": "Обновить",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "Свёрнуто в трей. Щёлкните значок правой кнопкой, чтобы выйти."
 }
