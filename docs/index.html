@@ -44,9 +44,12 @@
   .brand svg{width:22px; height:22px}
   .brand:hover{text-decoration:none}
   nav .spacer{flex:1}
-  nav .links a{color:var(--muted); margin-left:20px; font-size:14.5px}
+  nav .links a{color:var(--muted); margin-inline-start:20px; font-size:14.5px}
   nav .links a:hover{color:var(--fg); text-decoration:none}
-  @media(max-width:640px){ nav .links{display:none} }
+  @media(max-width:680px){ nav .links{display:none} }
+  .langsel{background:var(--card); color:var(--fg); border:1px solid var(--line);
+    border-radius:9px; padding:7px 10px; font-size:14px; cursor:pointer; margin-inline-start:6px}
+  .langsel:hover{border-color:#36415a}
 
   /* hero */
   .hero{position:relative; overflow:hidden; padding:84px 0 70px;
@@ -95,12 +98,12 @@
   /* steps */
   .steps{display:grid; grid-template-columns:repeat(auto-fit,minmax(230px,1fr)); gap:18px; margin-top:42px; counter-reset:s}
   .step{position:relative; background:var(--card); border:1px solid var(--line); border-radius:var(--radius); padding:24px 22px 22px}
-  .step::before{counter-increment:s; content:counter(s); position:absolute; top:-14px; left:22px;
+  .step::before{counter-increment:s; content:counter(s); position:absolute; top:-14px; inset-inline-start:22px;
     width:30px; height:30px; border-radius:8px; display:grid; place-items:center; font-weight:800; font-size:14px;
     background:linear-gradient(180deg,var(--blue),var(--blue2)); color:#fff}
   .step h3{font-size:16px; font-weight:700; margin-top:8px}
   .step p{color:var(--muted); font-size:14.5px; margin:8px 0 0}
-  .step code{background:#0b0e15; border:1px solid var(--line); border-radius:6px; padding:1px 6px; font-size:13px; color:var(--accent)}
+  .step code,.note code,.card code{background:#0b0e15; border:1px solid var(--line); border-radius:6px; padding:1px 6px; font-size:13px; color:var(--accent)}
 
   /* langs */
   .langbar{display:flex; flex-wrap:wrap; gap:10px; justify-content:center; margin-top:34px}
@@ -127,103 +130,104 @@
   </a>
   <span class="spacer"></span>
   <span class="links">
-    <a href="#features">Features</a>
-    <a href="#how">How it works</a>
-    <a href="#languages">Languages</a>
+    <a href="#features" data-i18n="nav.features">Features</a>
+    <a href="#how" data-i18n="nav.how">How it works</a>
+    <a href="#languages" data-i18n="nav.languages">Languages</a>
     <a href="https://github.com/houko/turbokey">GitHub</a>
   </span>
+  <select class="langsel" id="langsel" aria-label="Language"></select>
 </div></nav>
 
 <header class="hero" id="top"><div class="wrap">
-  <span class="badge-pill"><b>⚡</b> Windows • native GUI • <b>MIT</b> open source</span>
-  <h1>Turn any key into <span class="bolt">rapid-fire</span></h1>
-  <p class="lead">A lightweight Windows auto-fire tool. Bind a key to repeat itself — or another key — automatically, while held or as an on/off toggle. Each rule has its own interval. Works with normal apps and with games.</p>
+  <span class="badge-pill"><b>⚡</b> <span data-i18n="hero.pill">Windows · native GUI · <b>MIT</b> open source</span></span>
+  <h1 data-i18n="hero.title">Turn any key into <span class="bolt">rapid-fire</span></h1>
+  <p class="lead" data-i18n="hero.lead">A lightweight Windows auto-fire tool. Bind a key to repeat itself — or another key — automatically, while held or as an on/off toggle. Each rule has its own interval. Works with normal apps and with games.</p>
   <div class="cta">
     <a class="btn btn-primary" href="https://github.com/houko/turbokey/releases/latest/download/turbokey.exe">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      Download for Windows
+      <span data-i18n="hero.download">Download for Windows</span>
     </a>
     <a class="btn btn-ghost" href="https://github.com/houko/turbokey">
       <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5C5.6.5.5 5.6.5 12c0 5.1 3.3 9.4 7.9 10.9.6.1.8-.2.8-.5v-2c-3.2.7-3.9-1.4-3.9-1.4-.5-1.3-1.3-1.7-1.3-1.7-1-.7.1-.7.1-.7 1.2.1 1.8 1.2 1.8 1.2 1 1.8 2.7 1.3 3.4 1 .1-.8.4-1.3.7-1.6-2.6-.3-5.3-1.3-5.3-5.7 0-1.3.5-2.3 1.2-3.1-.1-.3-.5-1.5.1-3.1 0 0 1-.3 3.3 1.2a11.5 11.5 0 0 1 6 0C17.3 4.7 18.3 5 18.3 5c.6 1.6.2 2.8.1 3.1.8.8 1.2 1.8 1.2 3.1 0 4.4-2.7 5.4-5.3 5.7.4.4.8 1.1.8 2.2v3.3c0 .3.2.6.8.5 4.6-1.5 7.9-5.8 7.9-10.9C23.5 5.6 18.4.5 12 .5z"/></svg>
-      View on GitHub
+      <span data-i18n="hero.github">View on GitHub</span>
     </a>
   </div>
-  <p class="sub">Free • single self-contained .exe • no runtime to install • requires Windows 10/11</p>
-  <div class="shot"><img src="screenshot.png" alt="TurboKey window showing the rule editor" loading="lazy"></div>
+  <p class="sub" data-i18n="hero.sub">Free · single self-contained .exe · no runtime to install · requires Windows 10/11</p>
+  <div class="shot"><img src="screenshot.png" alt="TurboKey" loading="lazy"></div>
 </div></header>
 
 <section id="features"><div class="wrap">
   <div class="center">
-    <div class="eyebrow">Features</div>
-    <h2 class="sec-h">Small tool, no compromises</h2>
-    <p class="sec-p">Everything you need to automate a key, and nothing you don't.</p>
+    <div class="eyebrow" data-i18n="feat.eyebrow">Features</div>
+    <h2 class="sec-h" data-i18n="feat.title">Small tool, no compromises</h2>
+    <p class="sec-p" data-i18n="feat.sub">Everything you need to automate a key, and nothing you don't.</p>
   </div>
   <div class="grid">
     <div class="card">
       <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M13 2L4.5 13.5H11l-1 8.5L19.5 10H13z"/></svg></div>
-      <h3>Hold or toggle</h3>
-      <p>Repeat while a key is held, or press once to start and again to stop. Each rule its own mode and interval.</p>
+      <h3 data-i18n="feat.1.t">Hold or toggle</h3>
+      <p data-i18n="feat.1.d">Repeat while a key is held, or press once to start and again to stop. Each rule its own mode and interval.</p>
     </div>
     <div class="card">
       <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="6" width="20" height="12" rx="3"/><path d="M12 6v12"/></svg></div>
-      <h3>Keys &amp; mouse buttons</h3>
-      <p>Trigger and output can be any keyboard key or mouse button — left, right, middle, X1, X2.</p>
+      <h3 data-i18n="feat.2.t">Keys &amp; mouse buttons</h3>
+      <p data-i18n="feat.2.d">Trigger and output can be any keyboard key or mouse button — left, right, middle, X1, X2.</p>
     </div>
     <div class="card">
       <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a1 1 0 0 0 0 1.4l1.6 1.6a1 1 0 0 0 1.4 0l3.77-3.77a6 6 0 0 1-7.94 7.94l-6.91 6.91a2.12 2.12 0 0 1-3-3l6.91-6.91a6 6 0 0 1 7.94-7.94l-3.76 3.76z"/></svg></div>
-      <h3>Works with games</h3>
-      <p>Keys are injected as hardware scan codes via <code>SendInput</code> and held briefly, so poll-based and DirectInput games sample them reliably.</p>
+      <h3 data-i18n="feat.3.t">Works with games</h3>
+      <p data-i18n="feat.3.d">Keys are injected as hardware scan codes via <code>SendInput</code> and held briefly, so poll-based and DirectInput games sample them reliably.</p>
     </div>
     <div class="card">
       <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3v18h18"/><rect x="7" y="9" width="3" height="8"/><rect x="14" y="5" width="3" height="12"/></svg></div>
-      <h3>Per-app scope</h3>
-      <p>Limit rapid-fire to specific apps by process name, or pick from running programs. Leave blank to work everywhere.</p>
+      <h3 data-i18n="feat.4.t">Per-app scope</h3>
+      <p data-i18n="feat.4.d">Limit rapid-fire to specific apps by process name, or pick from running programs. Leave blank to work everywhere.</p>
     </div>
     <div class="card">
       <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H4z"/><path d="M2 20h20"/></svg></div>
-      <h3>System tray &amp; autostart</h3>
-      <p>Closing minimizes to the tray; a global <code>F8</code> master switch toggles everything. Optional start with Windows.</p>
+      <h3 data-i18n="feat.5.t">System tray &amp; autostart</h3>
+      <p data-i18n="feat.5.d">Closing minimizes to the tray; a global <code>F8</code> master switch toggles everything. Optional start with Windows.</p>
     </div>
     <div class="card">
       <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15 15 0 0 1 0 20 15 15 0 0 1 0-20z"/></svg></div>
-      <h3>13 languages</h3>
-      <p>Localized UI auto-detected from your OS, including fully mirrored right-to-left Arabic and Hebrew layouts.</p>
+      <h3 data-i18n="feat.6.t">13 languages</h3>
+      <p data-i18n="feat.6.d">Localized UI auto-detected from your OS, including fully mirrored right-to-left Arabic and Hebrew layouts.</p>
     </div>
   </div>
 </div></section>
 
 <section id="how" style="background:linear-gradient(180deg,var(--bg),var(--bg2)); border-top:1px solid var(--line); border-bottom:1px solid var(--line)"><div class="wrap">
   <div class="center">
-    <div class="eyebrow">How it works</div>
-    <h2 class="sec-h">Up and running in four steps</h2>
+    <div class="eyebrow" data-i18n="how.eyebrow">How it works</div>
+    <h2 class="sec-h" data-i18n="how.title">Up and running in four steps</h2>
   </div>
   <div class="steps">
     <div class="step">
-      <h3>Install</h3>
-      <p>Download <code>turbokey.exe</code> and launch it. Accept the UAC prompt — elevation lets it reach games that run as admin.</p>
+      <h3 data-i18n="step.1.t">Install</h3>
+      <p data-i18n="step.1.d">Download <code>turbokey.exe</code> and launch it. Accept the UAC prompt — elevation lets it reach games that run as admin.</p>
     </div>
     <div class="step">
-      <h3>Add a rule</h3>
-      <p>Pick a trigger key, an output key, a mode, and an interval in milliseconds, then click <b>Add</b>.</p>
+      <h3 data-i18n="step.2.t">Add a rule</h3>
+      <p data-i18n="step.2.d">Pick a trigger key, an output key, a mode, and an interval in milliseconds, then click <b>Add</b>.</p>
     </div>
     <div class="step">
-      <h3>Enable</h3>
-      <p>Press <code>F8</code> (or tick the master switch) to arm the tool globally.</p>
+      <h3 data-i18n="step.3.t">Enable</h3>
+      <p data-i18n="step.3.d">Press <code>F8</code> (or tick the master switch) to arm the tool globally.</p>
     </div>
     <div class="step">
-      <h3>Fire</h3>
-      <p>Hold or tap your trigger key and it repeats automatically. Press <code>F8</code> again when you're done.</p>
+      <h3 data-i18n="step.4.t">Fire</h3>
+      <p data-i18n="step.4.d">Hold or tap your trigger key and it repeats automatically. Press <code>F8</code> again when you're done.</p>
     </div>
   </div>
-  <div class="note">
+  <div class="note" data-i18n="how.note">
     <b>How does it stay reliable?</b> A low-level keyboard hook swallows your trigger key and emits clean <code>down → hold ~30ms → up</code> pulses tagged so the tool never re-triggers itself. The interval is the gap between presses; the practical ceiling is ~25–30 presses/second, which is plenty since games sample input per frame.
   </div>
 </div></section>
 
 <section id="languages"><div class="wrap center">
-  <div class="eyebrow">Localized</div>
-  <h2 class="sec-h">Available in 13 languages</h2>
-  <p class="sec-p">Auto-detected from Windows, switchable in-app. Read the docs in your language on GitHub.</p>
+  <div class="eyebrow" data-i18n="lang.eyebrow">Localized</div>
+  <h2 class="sec-h" data-i18n="lang.title">Available in 13 languages</h2>
+  <p class="sec-p" data-i18n="lang.sub">Auto-detected from Windows, switchable in-app. Read the docs in your language on GitHub.</p>
   <div class="langbar">
     <a class="lang" href="https://github.com/houko/turbokey/blob/main/README.md">English</a>
     <a class="lang" href="https://github.com/houko/turbokey/blob/main/docs/README.zh.md">简体中文</a>
@@ -241,15 +245,430 @@
   </div>
 
   <div class="cta" style="margin-top:48px">
-    <a class="btn btn-primary" href="https://github.com/houko/turbokey/releases/latest/download/turbokey.exe">Download for Windows</a>
-    <a class="btn btn-ghost" href="https://github.com/houko/turbokey/releases">All releases</a>
+    <a class="btn btn-primary" href="https://github.com/houko/turbokey/releases/latest/download/turbokey.exe"><span data-i18n="hero.download">Download for Windows</span></a>
+    <a class="btn btn-ghost" href="https://github.com/houko/turbokey/releases"><span data-i18n="cta.allreleases">All releases</span></a>
   </div>
 </div></section>
 
 <footer><div class="wrap">
-  <span>TurboKey — key auto-fire for Windows. Released under the <a href="https://github.com/houko/turbokey/blob/main/LICENSE">MIT License</a>.</span>
+  <span data-i18n="footer.text">TurboKey — key auto-fire for Windows. Released under the <a href='https://github.com/houko/turbokey/blob/main/LICENSE'>MIT License</a>.</span>
   <span><a href="https://github.com/houko/turbokey">GitHub</a> · <a href="https://github.com/houko/turbokey/releases">Releases</a> · <a href="https://github.com/houko/turbokey/issues">Issues</a></span>
 </div></footer>
+
+<script>
+// Native display name for each supported locale.
+var LANG_NAMES = {
+  en:"English", zh:"简体中文", "zh-Hant":"繁體中文", ja:"日本語", ko:"한국어",
+  es:"Español", fr:"Français", de:"Deutsch", ru:"Русский", pt:"Português",
+  it:"Italiano", ar:"العربية", he:"עברית"
+};
+var RTL = {ar:1, he:1};
+
+var I18N = {
+  en:{
+    "page.title":"TurboKey — Windows key auto-fire tool",
+    "nav.features":"Features","nav.how":"How it works","nav.languages":"Languages",
+    "hero.pill":"Windows · native GUI · <b>MIT</b> open source",
+    "hero.title":"Turn any key into <span class='bolt'>rapid-fire</span>",
+    "hero.lead":"A lightweight Windows auto-fire tool. Bind a key to repeat itself — or another key — automatically, while held or as an on/off toggle. Each rule has its own interval. Works with normal apps and with games.",
+    "hero.download":"Download for Windows","hero.github":"View on GitHub",
+    "hero.sub":"Free · single self-contained .exe · no runtime to install · requires Windows 10/11",
+    "feat.eyebrow":"Features","feat.title":"Small tool, no compromises",
+    "feat.sub":"Everything you need to automate a key, and nothing you don't.",
+    "feat.1.t":"Hold or toggle","feat.1.d":"Repeat while a key is held, or press once to start and again to stop. Each rule its own mode and interval.",
+    "feat.2.t":"Keys & mouse buttons","feat.2.d":"Trigger and output can be any keyboard key or mouse button — left, right, middle, X1, X2.",
+    "feat.3.t":"Works with games","feat.3.d":"Keys are injected as hardware scan codes via <code>SendInput</code> and held briefly, so poll-based and DirectInput games sample them reliably.",
+    "feat.4.t":"Per-app scope","feat.4.d":"Limit rapid-fire to specific apps by process name, or pick from running programs. Leave blank to work everywhere.",
+    "feat.5.t":"System tray & autostart","feat.5.d":"Closing minimizes to the tray; a global <code>F8</code> master switch toggles everything. Optional start with Windows.",
+    "feat.6.t":"13 languages","feat.6.d":"Localized UI auto-detected from your OS, including fully mirrored right-to-left Arabic and Hebrew layouts.",
+    "how.eyebrow":"How it works","how.title":"Up and running in four steps",
+    "step.1.t":"Install","step.1.d":"Download <code>turbokey.exe</code> and launch it. Accept the UAC prompt — elevation lets it reach games that run as admin.",
+    "step.2.t":"Add a rule","step.2.d":"Pick a trigger key, an output key, a mode, and an interval in milliseconds, then click <b>Add</b>.",
+    "step.3.t":"Enable","step.3.d":"Press <code>F8</code> (or tick the master switch) to arm the tool globally.",
+    "step.4.t":"Fire","step.4.d":"Hold or tap your trigger key and it repeats automatically. Press <code>F8</code> again when you're done.",
+    "how.note":"<b>How does it stay reliable?</b> A low-level keyboard hook swallows your trigger key and emits clean <code>down → hold ~30ms → up</code> pulses tagged so the tool never re-triggers itself. The interval is the gap between presses; the practical ceiling is ~25–30 presses/second, which is plenty since games sample input per frame.",
+    "lang.eyebrow":"Localized","lang.title":"Available in 13 languages",
+    "lang.sub":"Auto-detected from Windows, switchable in-app. Read the docs in your language on GitHub.",
+    "cta.allreleases":"All releases",
+    "footer.text":"TurboKey — key auto-fire for Windows. Released under the <a href='https://github.com/houko/turbokey/blob/main/LICENSE'>MIT License</a>."
+  },
+  zh:{
+    "page.title":"TurboKey — Windows 按键连发工具",
+    "nav.features":"特性","nav.how":"工作原理","nav.languages":"语言",
+    "hero.pill":"Windows · 原生界面 · <b>MIT</b> 开源",
+    "hero.title":"把任意按键变成<span class='bolt'>连发</span>",
+    "hero.lead":"一款轻量的 Windows 按键连发工具。把一个键绑成自动重复——重复自身或另一个键——可选按住触发或开关切换，每条规则各自设置间隔。兼容普通程序与游戏。",
+    "hero.download":"下载 Windows 版","hero.github":"在 GitHub 查看",
+    "hero.sub":"免费 · 单文件可执行 · 无需运行时 · 需要 Windows 10/11",
+    "feat.eyebrow":"特性","feat.title":"小工具，不将就",
+    "feat.sub":"自动化一个按键所需的一切，没有多余。",
+    "feat.1.t":"按住或开关","feat.1.d":"按住键时持续重复，或按一下开始、再按一下停止。每条规则各自设定模式和间隔。",
+    "feat.2.t":"键盘与鼠标键","feat.2.d":"触发键和输出键可以是任意键盘按键或鼠标按钮——左、右、中、X1、X2。",
+    "feat.3.t":"兼容游戏","feat.3.d":"按键通过 <code>SendInput</code> 以硬件扫描码注入并短暂保持，因此轮询型和 DirectInput 游戏都能稳定采样。",
+    "feat.4.t":"按程序限定","feat.4.d":"按进程名把连发限定到特定程序，或从运行中的程序里挑选。留空则全局生效。",
+    "feat.5.t":"系统托盘与自启","feat.5.d":"关闭窗口即最小化到托盘；全局 <code>F8</code> 总开关一键启停。可选开机自启。",
+    "feat.6.t":"13 种语言","feat.6.d":"界面按系统语言自动选择，包含完全镜像的从右到左阿拉伯语和希伯来语布局。",
+    "how.eyebrow":"工作原理","how.title":"四步即可上手",
+    "step.1.t":"安装","step.1.d":"下载 <code>turbokey.exe</code> 并运行，接受 UAC 提示——提权后才能作用于以管理员身份运行的游戏。",
+    "step.2.t":"添加规则","step.2.d":"选择触发键、输出键、模式和间隔（毫秒），然后点击<b>添加</b>。",
+    "step.3.t":"启用","step.3.d":"按 <code>F8</code>（或勾选总开关）全局启用工具。",
+    "step.4.t":"连发","step.4.d":"按住或点按触发键即自动重复。用完再按一次 <code>F8</code> 关闭。",
+    "how.note":"<b>为什么稳定?</b> 低级键盘钩子吞掉触发键，发出干净的 <code>按下 → 保持约 30ms → 抬起</code> 脉冲，并打标使工具永不自我触发。间隔是相邻按下之间的间隙；实际上限约每秒 25–30 次，对游戏足够，因为游戏按帧采样。",
+    "lang.eyebrow":"本地化","lang.title":"支持 13 种语言",
+    "lang.sub":"按 Windows 语言自动检测，可在程序内切换。在 GitHub 阅读你语言的文档。",
+    "cta.allreleases":"所有版本",
+    "footer.text":"TurboKey — Windows 按键连发工具。基于 <a href='https://github.com/houko/turbokey/blob/main/LICENSE'>MIT 许可证</a> 发布。"
+  },
+  "zh-Hant":{
+    "page.title":"TurboKey — Windows 按鍵連發工具",
+    "nav.features":"特性","nav.how":"運作原理","nav.languages":"語言",
+    "hero.pill":"Windows · 原生介面 · <b>MIT</b> 開源",
+    "hero.title":"把任意按鍵變成<span class='bolt'>連發</span>",
+    "hero.lead":"一款輕量的 Windows 按鍵連發工具。把一個鍵設成自動重複——重複自身或另一個鍵——可選按住觸發或開關切換，每條規則各自設定間隔。相容一般程式與遊戲。",
+    "hero.download":"下載 Windows 版","hero.github":"在 GitHub 檢視",
+    "hero.sub":"免費 · 單檔可執行 · 無需執行時 · 需要 Windows 10/11",
+    "feat.eyebrow":"特性","feat.title":"小工具，不將就",
+    "feat.sub":"自動化一個按鍵所需的一切，沒有多餘。",
+    "feat.1.t":"按住或開關","feat.1.d":"按住鍵時持續重複，或按一下開始、再按一下停止。每條規則各自設定模式和間隔。",
+    "feat.2.t":"鍵盤與滑鼠鍵","feat.2.d":"觸發鍵和輸出鍵可以是任意鍵盤按鍵或滑鼠按鈕——左、右、中、X1、X2。",
+    "feat.3.t":"相容遊戲","feat.3.d":"按鍵透過 <code>SendInput</code> 以硬體掃描碼注入並短暫保持，因此輪詢型和 DirectInput 遊戲都能穩定取樣。",
+    "feat.4.t":"依程式限定","feat.4.d":"依行程名把連發限定到特定程式，或從執行中的程式裡挑選。留空則全域生效。",
+    "feat.5.t":"系統匣與自啟","feat.5.d":"關閉視窗即最小化到系統匣；全域 <code>F8</code> 總開關一鍵啟停。可選開機自啟。",
+    "feat.6.t":"13 種語言","feat.6.d":"介面依系統語言自動選擇，包含完全鏡像的從右到左阿拉伯語和希伯來語版面。",
+    "how.eyebrow":"運作原理","how.title":"四步即可上手",
+    "step.1.t":"安裝","step.1.d":"下載 <code>turbokey.exe</code> 並執行，接受 UAC 提示——提權後才能作用於以管理員身份執行的遊戲。",
+    "step.2.t":"新增規則","step.2.d":"選擇觸發鍵、輸出鍵、模式和間隔（毫秒），然後按一下<b>新增</b>。",
+    "step.3.t":"啟用","step.3.d":"按 <code>F8</code>（或勾選總開關）全域啟用工具。",
+    "step.4.t":"連發","step.4.d":"按住或點按觸發鍵即自動重複。用完再按一次 <code>F8</code> 關閉。",
+    "how.note":"<b>為什麼穩定?</b> 低階鍵盤掛鉤吞掉觸發鍵，發出乾淨的 <code>按下 → 保持約 30ms → 放開</code> 脈衝，並加上標記使工具永不自我觸發。間隔是相鄰按下之間的間隙；實際上限約每秒 25–30 次，對遊戲足夠，因為遊戲按影格取樣。",
+    "lang.eyebrow":"在地化","lang.title":"支援 13 種語言",
+    "lang.sub":"依 Windows 語言自動偵測，可在程式內切換。在 GitHub 閱讀你語言的文件。",
+    "cta.allreleases":"所有版本",
+    "footer.text":"TurboKey — Windows 按鍵連發工具。基於 <a href='https://github.com/houko/turbokey/blob/main/LICENSE'>MIT 授權</a> 發布。"
+  },
+  ja:{
+    "page.title":"TurboKey — Windows キー連打ツール",
+    "nav.features":"機能","nav.how":"仕組み","nav.languages":"言語",
+    "hero.pill":"Windows · ネイティブ GUI · <b>MIT</b> オープンソース",
+    "hero.title":"どんなキーも<span class='bolt'>連打</span>に",
+    "hero.lead":"軽量な Windows 連打ツール。1 つのキーを自動連打にバインドできます（同じキーでも別のキーでも）。押し続けかトグル、ルールごとに間隔を設定。通常のアプリでもゲームでも動作します。",
+    "hero.download":"Windows 版をダウンロード","hero.github":"GitHub で見る",
+    "hero.sub":"無料 · 単一実行ファイル · ランタイム不要 · Windows 10/11 が必要",
+    "feat.eyebrow":"機能","feat.title":"小さくても妥協なし",
+    "feat.sub":"キーを自動化するのに必要なものすべて、余計なものなし。",
+    "feat.1.t":"押し続け／トグル","feat.1.d":"キーを押している間繰り返す、または 1 回押して開始・もう一度で停止。ルールごとにモードと間隔を設定。",
+    "feat.2.t":"キーとマウスボタン","feat.2.d":"トリガーと出力に任意のキーボードキーやマウスボタン（左・右・中・X1・X2）を使えます。",
+    "feat.3.t":"ゲームで動作","feat.3.d":"キーは <code>SendInput</code> でハードウェアスキャンコードとして送信され短時間保持されるため、ポーリング型や DirectInput のゲームでも確実にサンプリングされます。",
+    "feat.4.t":"アプリ単位の範囲","feat.4.d":"プロセス名で特定のアプリに連打を限定、または実行中のプログラムから選択。空ならどこでも動作。",
+    "feat.5.t":"トレイと自動起動","feat.5.d":"閉じるとトレイに最小化。グローバルな <code>F8</code> マスタースイッチで一括切替。Windows 起動時の実行も任意で。",
+    "feat.6.t":"13 言語","feat.6.d":"OS から自動検出されるローカライズ UI。完全ミラーの右から左アラビア語・ヘブライ語レイアウトも対応。",
+    "how.eyebrow":"仕組み","how.title":"4 ステップで使える",
+    "step.1.t":"インストール","step.1.d":"<code>turbokey.exe</code> をダウンロードして起動し、UAC を承諾します。昇格により管理者で動くゲームにも届きます。",
+    "step.2.t":"ルールを追加","step.2.d":"トリガーキー、出力キー、モード、間隔（ミリ秒）を選び、<b>追加</b>をクリック。",
+    "step.3.t":"有効化","step.3.d":"<code>F8</code>（またはマスタースイッチ）でツールをグローバルに有効化。",
+    "step.4.t":"連打","step.4.d":"トリガーキーを押し続けるか軽く押すと自動で繰り返します。終わったら <code>F8</code> をもう一度。",
+    "how.note":"<b>なぜ安定するのか?</b> 低レベルキーボードフックがトリガーキーを飲み込み、<code>ダウン → 約30ms保持 → アップ</code> のクリーンなパルスを送ります。タグ付けにより自己再帰しません。間隔は押下間の隙間で、実用上限は毎秒25〜30回ほど。ゲームはフレーム単位でサンプリングするため十分です。",
+    "lang.eyebrow":"ローカライズ","lang.title":"13 言語に対応",
+    "lang.sub":"Windows から自動検出、アプリ内で切替可能。GitHub であなたの言語のドキュメントを読めます。",
+    "cta.allreleases":"すべてのリリース",
+    "footer.text":"TurboKey — Windows 用キー連打ツール。<a href='https://github.com/houko/turbokey/blob/main/LICENSE'>MIT ライセンス</a> で配布。"
+  },
+  ko:{
+    "page.title":"TurboKey — Windows 키 연타 도구",
+    "nav.features":"기능","nav.how":"작동 방식","nav.languages":"언어",
+    "hero.pill":"Windows · 네이티브 GUI · <b>MIT</b> 오픈소스",
+    "hero.title":"어떤 키든 <span class='bolt'>연타</span>로",
+    "hero.lead":"가벼운 Windows 연타 도구. 키 하나를 자동 반복으로 바인딩하세요(같은 키 또는 다른 키). 누름 또는 토글, 규칙마다 간격 설정. 일반 앱과 게임 모두에서 동작합니다.",
+    "hero.download":"Windows용 다운로드","hero.github":"GitHub에서 보기",
+    "hero.sub":"무료 · 단일 실행 파일 · 런타임 불필요 · Windows 10/11 필요",
+    "feat.eyebrow":"기능","feat.title":"작지만 타협 없음",
+    "feat.sub":"키를 자동화하는 데 필요한 모든 것, 군더더기 없이.",
+    "feat.1.t":"누름 또는 토글","feat.1.d":"키를 누르고 있는 동안 반복하거나, 한 번 눌러 시작하고 다시 눌러 정지. 규칙마다 모드와 간격을 설정.",
+    "feat.2.t":"키 & 마우스 버튼","feat.2.d":"트리거와 출력에 모든 키보드 키 또는 마우스 버튼(왼쪽·오른쪽·가운데·X1·X2)을 사용 가능.",
+    "feat.3.t":"게임에서 동작","feat.3.d":"키는 <code>SendInput</code>으로 하드웨어 스캔 코드로 주입되고 잠시 유지되어, 폴링 기반과 DirectInput 게임에서도 안정적으로 감지됩니다.",
+    "feat.4.t":"앱별 범위","feat.4.d":"프로세스 이름으로 특정 앱에 연타를 제한하거나 실행 중인 프로그램에서 선택. 비우면 어디서나 동작.",
+    "feat.5.t":"트레이 & 자동 시작","feat.5.d":"닫으면 트레이로 최소화. 전역 <code>F8</code> 마스터 스위치로 한 번에 전환. 선택적 Windows 시작 시 실행.",
+    "feat.6.t":"13개 언어","feat.6.d":"OS에서 자동 감지되는 현지화 UI. 완전 미러링된 오른쪽에서 왼쪽 아랍어·히브리어 레이아웃 포함.",
+    "how.eyebrow":"작동 방식","how.title":"네 단계로 시작",
+    "step.1.t":"설치","step.1.d":"<code>turbokey.exe</code>를 받아 실행하고 UAC를 수락하세요. 권한 상승으로 관리자로 실행되는 게임에도 닿습니다.",
+    "step.2.t":"규칙 추가","step.2.d":"트리거 키, 출력 키, 모드, 간격(ms)을 선택한 뒤 <b>추가</b>를 클릭.",
+    "step.3.t":"활성화","step.3.d":"<code>F8</code>(또는 마스터 스위치 체크)로 도구를 전역 활성화.",
+    "step.4.t":"연타","step.4.d":"트리거 키를 누르고 있거나 가볍게 누르면 자동 반복됩니다. 끝나면 <code>F8</code>을 다시 누르세요.",
+    "how.note":"<b>어떻게 안정적인가요?</b> 저수준 키보드 후크가 트리거 키를 삼키고 <code>다운 → 약 30ms 유지 → 업</code>의 깨끗한 펄스를 보냅니다. 태그를 달아 자기 자신을 재트리거하지 않습니다. 간격은 입력 사이의 간격이며 실용적 상한은 초당 약 25~30회로, 게임이 프레임 단위로 샘플링하므로 충분합니다.",
+    "lang.eyebrow":"현지화","lang.title":"13개 언어 지원",
+    "lang.sub":"Windows에서 자동 감지, 앱 내 전환 가능. GitHub에서 원하는 언어의 문서를 읽으세요.",
+    "cta.allreleases":"모든 릴리스",
+    "footer.text":"TurboKey — Windows용 키 연타 도구. <a href='https://github.com/houko/turbokey/blob/main/LICENSE'>MIT 라이선스</a>로 배포."
+  },
+  es:{
+    "page.title":"TurboKey — herramienta de pulsación automática para Windows",
+    "nav.features":"Características","nav.how":"Cómo funciona","nav.languages":"Idiomas",
+    "hero.pill":"Windows · GUI nativa · código abierto <b>MIT</b>",
+    "hero.title":"Convierte cualquier tecla en <span class='bolt'>pulsación rápida</span>",
+    "hero.lead":"Una herramienta ligera de pulsación automática para Windows. Vincula una tecla para repetirse sola — u otra tecla — automáticamente, mientras la mantienes o como interruptor on/off. Cada regla con su propio intervalo. Funciona con apps y juegos.",
+    "hero.download":"Descargar para Windows","hero.github":"Ver en GitHub",
+    "hero.sub":"Gratis · un solo .exe autónomo · sin runtime · requiere Windows 10/11",
+    "feat.eyebrow":"Características","feat.title":"Herramienta pequeña, sin concesiones",
+    "feat.sub":"Todo lo que necesitas para automatizar una tecla, y nada más.",
+    "feat.1.t":"Mantener o alternar","feat.1.d":"Repite mientras se mantiene una tecla, o púlsala una vez para iniciar y otra para parar. Cada regla con su modo e intervalo.",
+    "feat.2.t":"Teclas y botones del ratón","feat.2.d":"El disparo y la salida pueden ser cualquier tecla o botón del ratón: izquierdo, derecho, central, X1, X2.",
+    "feat.3.t":"Funciona con juegos","feat.3.d":"Las teclas se inyectan como scan codes de hardware vía <code>SendInput</code> y se mantienen un instante, así los juegos por sondeo y DirectInput las muestrean de forma fiable.",
+    "feat.4.t":"Ámbito por app","feat.4.d":"Limita la pulsación rápida a apps concretas por nombre de proceso, o elígelas de los programas en ejecución. Vacío = en todas partes.",
+    "feat.5.t":"Bandeja y autoinicio","feat.5.d":"Cerrar minimiza a la bandeja; un interruptor maestro global <code>F8</code> lo activa todo. Inicio con Windows opcional.",
+    "feat.6.t":"13 idiomas","feat.6.d":"UI localizada detectada automáticamente del SO, incluidos diseños árabe y hebreo de derecha a izquierda totalmente reflejados.",
+    "how.eyebrow":"Cómo funciona","how.title":"Listo en cuatro pasos",
+    "step.1.t":"Instalar","step.1.d":"Descarga <code>turbokey.exe</code> y ejecútalo. Acepta el aviso UAC: la elevación le permite llegar a juegos que se ejecutan como administrador.",
+    "step.2.t":"Añadir una regla","step.2.d":"Elige una tecla de disparo, una de salida, un modo y un intervalo en milisegundos, luego pulsa <b>Añadir</b>.",
+    "step.3.t":"Activar","step.3.d":"Pulsa <code>F8</code> (o marca el interruptor maestro) para armar la herramienta globalmente.",
+    "step.4.t":"Disparar","step.4.d":"Mantén o toca tu tecla de disparo y se repite sola. Pulsa <code>F8</code> de nuevo al terminar.",
+    "how.note":"<b>¿Cómo se mantiene fiable?</b> Un hook de teclado de bajo nivel se traga tu tecla de disparo y emite pulsos limpios <code>abajo → mantener ~30ms → arriba</code>, etiquetados para que la herramienta nunca se reactive a sí misma. El intervalo es el hueco entre pulsaciones; el techo práctico es ~25–30/segundo, de sobra porque el juego muestrea por fotograma.",
+    "lang.eyebrow":"Localizado","lang.title":"Disponible en 13 idiomas",
+    "lang.sub":"Detectado automáticamente de Windows, conmutable en la app. Lee la documentación en tu idioma en GitHub.",
+    "cta.allreleases":"Todas las versiones",
+    "footer.text":"TurboKey — pulsación automática de teclas para Windows. Publicado bajo la <a href='https://github.com/houko/turbokey/blob/main/LICENSE'>Licencia MIT</a>."
+  },
+  fr:{
+    "page.title":"TurboKey — outil de frappe automatique pour Windows",
+    "nav.features":"Fonctionnalités","nav.how":"Comment ça marche","nav.languages":"Langues",
+    "hero.pill":"Windows · interface native · open source <b>MIT</b>",
+    "hero.title":"Transformez n'importe quelle touche en <span class='bolt'>frappe rapide</span>",
+    "hero.lead":"Un outil léger de frappe automatique pour Windows. Associez une touche à sa propre répétition — ou à une autre — automatiquement, en maintien ou en bascule on/off. Chaque règle a son intervalle. Fonctionne avec les apps et les jeux.",
+    "hero.download":"Télécharger pour Windows","hero.github":"Voir sur GitHub",
+    "hero.sub":"Gratuit · un seul .exe autonome · sans runtime · nécessite Windows 10/11",
+    "feat.eyebrow":"Fonctionnalités","feat.title":"Petit outil, aucun compromis",
+    "feat.sub":"Tout ce qu'il faut pour automatiser une touche, et rien de plus.",
+    "feat.1.t":"Maintien ou bascule","feat.1.d":"Répète tant qu'une touche est maintenue, ou un appui pour lancer et un autre pour arrêter. Chaque règle son mode et son intervalle.",
+    "feat.2.t":"Touches et boutons souris","feat.2.d":"Le déclenchement et la sortie peuvent être n'importe quelle touche ou bouton de souris : gauche, droit, milieu, X1, X2.",
+    "feat.3.t":"Fonctionne avec les jeux","feat.3.d":"Les touches sont injectées en scan codes matériels via <code>SendInput</code> et maintenues brièvement, pour que les jeux à polling et DirectInput les échantillonnent de façon fiable.",
+    "feat.4.t":"Portée par app","feat.4.d":"Limitez la frappe rapide à des apps précises par nom de processus, ou choisissez parmi les programmes en cours. Vide = partout.",
+    "feat.5.t":"Barre d'état et démarrage auto","feat.5.d":"Fermer réduit dans la barre ; un interrupteur principal global <code>F8</code> bascule tout. Démarrage avec Windows en option.",
+    "feat.6.t":"13 langues","feat.6.d":"Interface localisée détectée automatiquement depuis l'OS, dont les dispositions arabe et hébreu de droite à gauche entièrement en miroir.",
+    "how.eyebrow":"Comment ça marche","how.title":"Opérationnel en quatre étapes",
+    "step.1.t":"Installer","step.1.d":"Téléchargez <code>turbokey.exe</code> et lancez-le. Acceptez l'invite UAC : l'élévation lui permet d'atteindre les jeux exécutés en administrateur.",
+    "step.2.t":"Ajouter une règle","step.2.d":"Choisissez une touche de déclenchement, une de sortie, un mode et un intervalle en millisecondes, puis cliquez sur <b>Ajouter</b>.",
+    "step.3.t":"Activer","step.3.d":"Appuyez sur <code>F8</code> (ou cochez l'interrupteur principal) pour armer l'outil globalement.",
+    "step.4.t":"Tirer","step.4.d":"Maintenez ou tapez votre touche de déclenchement, elle se répète seule. Réappuyez sur <code>F8</code> une fois terminé.",
+    "how.note":"<b>Comment reste-t-il fiable ?</b> Un hook clavier bas niveau avale votre touche de déclenchement et émet des impulsions propres <code>bas → maintien ~30ms → haut</code>, marquées pour que l'outil ne se redéclenche jamais. L'intervalle est l'écart entre appuis ; le plafond pratique est ~25–30/seconde, largement suffisant car le jeu échantillonne par image.",
+    "lang.eyebrow":"Localisé","lang.title":"Disponible en 13 langues",
+    "lang.sub":"Détecté automatiquement depuis Windows, commutable dans l'app. Lisez la doc dans votre langue sur GitHub.",
+    "cta.allreleases":"Toutes les versions",
+    "footer.text":"TurboKey — frappe automatique pour Windows. Publié sous <a href='https://github.com/houko/turbokey/blob/main/LICENSE'>licence MIT</a>."
+  },
+  de:{
+    "page.title":"TurboKey — Windows-Werkzeug für Tasten-Dauerfeuer",
+    "nav.features":"Funktionen","nav.how":"Funktionsweise","nav.languages":"Sprachen",
+    "hero.pill":"Windows · native GUI · <b>MIT</b> Open Source",
+    "hero.title":"Mach jede Taste zu <span class='bolt'>Dauerfeuer</span>",
+    "hero.lead":"Ein schlankes Windows-Werkzeug für Tasten-Dauerfeuer. Binde eine Taste so, dass sie sich selbst — oder eine andere — automatisch wiederholt, beim Halten oder als Ein/Aus-Schalter. Jede Regel mit eigenem Intervall. Funktioniert mit Apps und Spielen.",
+    "hero.download":"Für Windows herunterladen","hero.github":"Auf GitHub ansehen",
+    "hero.sub":"Kostenlos · eine eigenständige .exe · keine Runtime · benötigt Windows 10/11",
+    "feat.eyebrow":"Funktionen","feat.title":"Kleines Werkzeug, keine Kompromisse",
+    "feat.sub":"Alles, um eine Taste zu automatisieren, und nichts Überflüssiges.",
+    "feat.1.t":"Halten oder umschalten","feat.1.d":"Wiederholt, solange eine Taste gehalten wird, oder einmal drücken zum Start und erneut zum Stopp. Jede Regel mit eigenem Modus und Intervall.",
+    "feat.2.t":"Tasten & Maustasten","feat.2.d":"Auslöser und Ausgabe können jede Tastatur- oder Maustaste sein — links, rechts, Mitte, X1, X2.",
+    "feat.3.t":"Funktioniert mit Spielen","feat.3.d":"Tasten werden als Hardware-Scancodes über <code>SendInput</code> eingespeist und kurz gehalten, damit abfragebasierte und DirectInput-Spiele sie zuverlässig erfassen.",
+    "feat.4.t":"Geltungsbereich pro App","feat.4.d":"Beschränke das Dauerfeuer per Prozessname auf bestimmte Apps oder wähle aus laufenden Programmen. Leer = überall.",
+    "feat.5.t":"Infobereich & Autostart","feat.5.d":"Schließen minimiert in den Infobereich; ein globaler <code>F8</code>-Hauptschalter schaltet alles. Optional mit Windows starten.",
+    "feat.6.t":"13 Sprachen","feat.6.d":"Lokalisierte UI, automatisch vom Betriebssystem erkannt, inkl. vollständig gespiegelter Rechts-nach-links-Layouts für Arabisch und Hebräisch.",
+    "how.eyebrow":"Funktionsweise","how.title":"In vier Schritten startklar",
+    "step.1.t":"Installieren","step.1.d":"Lade <code>turbokey.exe</code> herunter und starte es. Bestätige die UAC-Abfrage — die Erhöhung lässt es Spiele erreichen, die als Admin laufen.",
+    "step.2.t":"Regel hinzufügen","step.2.d":"Wähle eine Auslösetaste, eine Ausgabetaste, einen Modus und ein Intervall in Millisekunden, dann klicke auf <b>Hinzufügen</b>.",
+    "step.3.t":"Aktivieren","step.3.d":"Drücke <code>F8</code> (oder hake den Hauptschalter an), um das Werkzeug global scharf zu schalten.",
+    "step.4.t":"Feuern","step.4.d":"Halte oder tippe deine Auslösetaste, und sie wiederholt sich von selbst. Drücke <code>F8</code> erneut, wenn du fertig bist.",
+    "how.note":"<b>Wie bleibt es zuverlässig?</b> Ein Low-Level-Tastatur-Hook schluckt deine Auslösetaste und sendet saubere <code>runter → ~30ms halten → hoch</code>-Impulse, markiert, damit sich das Werkzeug nie selbst auslöst. Das Intervall ist der Abstand zwischen den Anschlägen; die praktische Obergrenze liegt bei ~25–30/Sekunde — genug, da Spiele pro Frame abtasten.",
+    "lang.eyebrow":"Lokalisiert","lang.title":"In 13 Sprachen verfügbar",
+    "lang.sub":"Automatisch von Windows erkannt, in der App umschaltbar. Lies die Doku in deiner Sprache auf GitHub.",
+    "cta.allreleases":"Alle Releases",
+    "footer.text":"TurboKey — Tasten-Dauerfeuer für Windows. Veröffentlicht unter der <a href='https://github.com/houko/turbokey/blob/main/LICENSE'>MIT-Lizenz</a>."
+  },
+  ru:{
+    "page.title":"TurboKey — инструмент автонажатия клавиш для Windows",
+    "nav.features":"Возможности","nav.how":"Как это работает","nav.languages":"Языки",
+    "hero.pill":"Windows · нативный GUI · открытый код <b>MIT</b>",
+    "hero.title":"Преврати любую клавишу в <span class='bolt'>автоповтор</span>",
+    "hero.lead":"Лёгкий инструмент автонажатия для Windows. Привяжите клавишу к автоповтору себя — или другой клавиши — при удержании или как переключатель вкл/выкл. У каждого правила свой интервал. Работает с приложениями и играми.",
+    "hero.download":"Скачать для Windows","hero.github":"Открыть на GitHub",
+    "hero.sub":"Бесплатно · один автономный .exe · без среды выполнения · нужен Windows 10/11",
+    "feat.eyebrow":"Возможности","feat.title":"Маленький инструмент без компромиссов",
+    "feat.sub":"Всё, что нужно для автоматизации клавиши, и ничего лишнего.",
+    "feat.1.t":"Удержание или переключение","feat.1.d":"Повторяет, пока клавиша удерживается, или одно нажатие — старт, следующее — стоп. У каждого правила свой режим и интервал.",
+    "feat.2.t":"Клавиши и кнопки мыши","feat.2.d":"Триггер и вывод — любая клавиша клавиатуры или кнопка мыши: левая, правая, средняя, X1, X2.",
+    "feat.3.t":"Работает с играми","feat.3.d":"Клавиши вводятся как аппаратные скан-коды через <code>SendInput</code> и кратко удерживаются, поэтому игры с опросом и на DirectInput считывают их надёжно.",
+    "feat.4.t":"Область по приложению","feat.4.d":"Ограничьте автонажатие конкретными приложениями по имени процесса или выберите из запущенных программ. Пусто = везде.",
+    "feat.5.t":"Трей и автозапуск","feat.5.d":"Закрытие сворачивает в трей; глобальный главный переключатель <code>F8</code> включает всё. Запуск с Windows по желанию.",
+    "feat.6.t":"13 языков","feat.6.d":"Локализованный интерфейс с автоопределением из ОС, включая полностью зеркальные раскладки справа налево для арабского и иврита.",
+    "how.eyebrow":"Как это работает","how.title":"Готово за четыре шага",
+    "step.1.t":"Установка","step.1.d":"Скачайте <code>turbokey.exe</code> и запустите. Примите запрос UAC — повышение прав позволяет дотянуться до игр, работающих от админа.",
+    "step.2.t":"Добавьте правило","step.2.d":"Выберите клавишу-триггер, клавишу вывода, режим и интервал в миллисекундах, затем нажмите <b>Добавить</b>.",
+    "step.3.t":"Включите","step.3.d":"Нажмите <code>F8</code> (или галочку главного переключателя), чтобы активировать инструмент глобально.",
+    "step.4.t":"Стрельба","step.4.d":"Удерживайте или нажмите клавишу-триггер — и она повторяется сама. Нажмите <code>F8</code> снова, когда закончите.",
+    "how.note":"<b>Почему это надёжно?</b> Низкоуровневый хук клавиатуры проглатывает клавишу-триггер и выдаёт чистые импульсы <code>вниз → удержание ~30мс → вверх</code> с меткой, чтобы инструмент не срабатывал сам на себя. Интервал — промежуток между нажатиями; практический потолок ~25–30 в секунду, чего с избытком хватает, ведь игра считывает покадрово.",
+    "lang.eyebrow":"Локализовано","lang.title":"Доступно на 13 языках",
+    "lang.sub":"Автоопределение из Windows, переключение в приложении. Читайте документацию на вашем языке на GitHub.",
+    "cta.allreleases":"Все релизы",
+    "footer.text":"TurboKey — автонажатие клавиш для Windows. Распространяется по <a href='https://github.com/houko/turbokey/blob/main/LICENSE'>лицензии MIT</a>."
+  },
+  pt:{
+    "page.title":"TurboKey — ferramenta de disparo automático para Windows",
+    "nav.features":"Recursos","nav.how":"Como funciona","nav.languages":"Idiomas",
+    "hero.pill":"Windows · GUI nativa · código aberto <b>MIT</b>",
+    "hero.title":"Transforme qualquer tecla em <span class='bolt'>disparo rápido</span>",
+    "hero.lead":"Uma ferramenta leve de disparo automático para Windows. Vincule uma tecla para repetir a si mesma — ou outra — automaticamente, enquanto pressionada ou como interruptor liga/desliga. Cada regra com seu intervalo. Funciona com apps e jogos.",
+    "hero.download":"Baixar para Windows","hero.github":"Ver no GitHub",
+    "hero.sub":"Grátis · um único .exe autônomo · sem runtime · requer Windows 10/11",
+    "feat.eyebrow":"Recursos","feat.title":"Ferramenta pequena, sem concessões",
+    "feat.sub":"Tudo o que você precisa para automatizar uma tecla, e nada além.",
+    "feat.1.t":"Segurar ou alternar","feat.1.d":"Repete enquanto a tecla é segurada, ou pressione uma vez para iniciar e outra para parar. Cada regra com seu modo e intervalo.",
+    "feat.2.t":"Teclas e botões do mouse","feat.2.d":"Disparo e saída podem ser qualquer tecla ou botão do mouse — esquerdo, direito, meio, X1, X2.",
+    "feat.3.t":"Funciona com jogos","feat.3.d":"As teclas são injetadas como scan codes de hardware via <code>SendInput</code> e mantidas por um instante, então jogos por polling e DirectInput as amostram de forma confiável.",
+    "feat.4.t":"Escopo por app","feat.4.d":"Limite o disparo rápido a apps específicos por nome de processo, ou escolha entre os programas em execução. Vazio = em todo lugar.",
+    "feat.5.t":"Bandeja e início automático","feat.5.d":"Fechar minimiza para a bandeja; um interruptor mestre global <code>F8</code> alterna tudo. Iniciar com o Windows opcional.",
+    "feat.6.t":"13 idiomas","feat.6.d":"UI localizada detectada automaticamente do SO, incluindo layouts árabe e hebraico da direita para a esquerda totalmente espelhados.",
+    "how.eyebrow":"Como funciona","how.title":"Pronto em quatro passos",
+    "step.1.t":"Instalar","step.1.d":"Baixe o <code>turbokey.exe</code> e execute. Aceite o prompt UAC — a elevação permite alcançar jogos que rodam como administrador.",
+    "step.2.t":"Adicionar uma regra","step.2.d":"Escolha uma tecla de disparo, uma de saída, um modo e um intervalo em milissegundos, depois clique em <b>Adicionar</b>.",
+    "step.3.t":"Ativar","step.3.d":"Pressione <code>F8</code> (ou marque o interruptor mestre) para armar a ferramenta globalmente.",
+    "step.4.t":"Disparar","step.4.d":"Segure ou toque sua tecla de disparo e ela se repete sozinha. Pressione <code>F8</code> de novo ao terminar.",
+    "how.note":"<b>Como se mantém confiável?</b> Um hook de teclado de baixo nível engole sua tecla de disparo e emite pulsos limpos <code>baixo → segurar ~30ms → cima</code>, marcados para que a ferramenta nunca se redispare. O intervalo é o espaço entre as pressões; o teto prático é ~25–30/segundo, de sobra já que o jogo amostra por quadro.",
+    "lang.eyebrow":"Localizado","lang.title":"Disponível em 13 idiomas",
+    "lang.sub":"Detectado automaticamente do Windows, alternável no app. Leia a documentação no seu idioma no GitHub.",
+    "cta.allreleases":"Todas as versões",
+    "footer.text":"TurboKey — disparo automático de teclas para Windows. Publicado sob a <a href='https://github.com/houko/turbokey/blob/main/LICENSE'>Licença MIT</a>."
+  },
+  it:{
+    "page.title":"TurboKey — strumento di pressione automatica per Windows",
+    "nav.features":"Funzionalità","nav.how":"Come funziona","nav.languages":"Lingue",
+    "hero.pill":"Windows · GUI nativa · open source <b>MIT</b>",
+    "hero.title":"Trasforma qualsiasi tasto in <span class='bolt'>pressione rapida</span>",
+    "hero.lead":"Uno strumento leggero di pressione automatica per Windows. Associa un tasto affinché si ripeta da solo — o un altro — automaticamente, mentre è tenuto premuto o come interruttore on/off. Ogni regola con il proprio intervallo. Funziona con app e giochi.",
+    "hero.download":"Scarica per Windows","hero.github":"Vedi su GitHub",
+    "hero.sub":"Gratis · un singolo .exe autonomo · nessun runtime · richiede Windows 10/11",
+    "feat.eyebrow":"Funzionalità","feat.title":"Strumento piccolo, nessun compromesso",
+    "feat.sub":"Tutto ciò che serve per automatizzare un tasto, e niente di più.",
+    "feat.1.t":"Tieni o alterna","feat.1.d":"Ripete finché un tasto è tenuto premuto, oppure premi una volta per avviare e di nuovo per fermare. Ogni regola con il proprio modo e intervallo.",
+    "feat.2.t":"Tasti e pulsanti del mouse","feat.2.d":"Attivazione e uscita possono essere qualsiasi tasto o pulsante del mouse: sinistro, destro, centrale, X1, X2.",
+    "feat.3.t":"Funziona con i giochi","feat.3.d":"I tasti vengono iniettati come scan code hardware tramite <code>SendInput</code> e mantenuti brevemente, così i giochi basati su polling e DirectInput li campionano in modo affidabile.",
+    "feat.4.t":"Ambito per app","feat.4.d":"Limita la pressione rapida ad app specifiche per nome del processo, o scegli tra i programmi in esecuzione. Vuoto = ovunque.",
+    "feat.5.t":"Area di notifica e avvio automatico","feat.5.d":"Chiudere riduce a icona nell'area di notifica; un interruttore principale globale <code>F8</code> commuta tutto. Avvio con Windows opzionale.",
+    "feat.6.t":"13 lingue","feat.6.d":"UI localizzata rilevata automaticamente dal sistema operativo, inclusi layout arabo ed ebraico da destra a sinistra completamente speculari.",
+    "how.eyebrow":"Come funziona","how.title":"Operativo in quattro passi",
+    "step.1.t":"Installa","step.1.d":"Scarica <code>turbokey.exe</code> ed eseguilo. Accetta la richiesta UAC — l'elevazione gli permette di raggiungere i giochi eseguiti come amministratore.",
+    "step.2.t":"Aggiungi una regola","step.2.d":"Scegli un tasto di attivazione, uno di uscita, un modo e un intervallo in millisecondi, poi clicca su <b>Aggiungi</b>.",
+    "step.3.t":"Abilita","step.3.d":"Premi <code>F8</code> (o spunta l'interruttore principale) per attivare lo strumento globalmente.",
+    "step.4.t":"Spara","step.4.d":"Tieni premuto o tocca il tuo tasto di attivazione e si ripete da solo. Premi di nuovo <code>F8</code> quando hai finito.",
+    "how.note":"<b>Come resta affidabile?</b> Un hook della tastiera di basso livello inghiotte il tuo tasto di attivazione ed emette impulsi puliti <code>giù → mantieni ~30ms → su</code>, etichettati così lo strumento non si riattiva mai da solo. L'intervallo è lo spazio tra le pressioni; il tetto pratico è ~25–30/secondo, più che sufficiente perché il gioco campiona per fotogramma.",
+    "lang.eyebrow":"Localizzato","lang.title":"Disponibile in 13 lingue",
+    "lang.sub":"Rilevato automaticamente da Windows, commutabile nell'app. Leggi la documentazione nella tua lingua su GitHub.",
+    "cta.allreleases":"Tutte le release",
+    "footer.text":"TurboKey — pressione automatica di tasti per Windows. Rilasciato con <a href='https://github.com/houko/turbokey/blob/main/LICENSE'>licenza MIT</a>."
+  },
+  ar:{
+    "page.title":"TurboKey — أداة النقر التلقائي للمفاتيح على Windows",
+    "nav.features":"الميزات","nav.how":"كيف تعمل","nav.languages":"اللغات",
+    "hero.pill":"Windows · واجهة أصلية · مفتوحة المصدر <b>MIT</b>",
+    "hero.title":"حوّل أي مفتاح إلى <span class='bolt'>نقر سريع</span>",
+    "hero.lead":"أداة خفيفة للنقر التلقائي على Windows. اربط مفتاحًا ليكرر نفسه — أو مفتاحًا آخر — تلقائيًا، أثناء الضغط المستمر أو كمفتاح تبديل تشغيل/إيقاف. لكل قاعدة فاصلها الخاص. تعمل مع التطبيقات والألعاب.",
+    "hero.download":"تنزيل لنظام Windows","hero.github":"عرض على GitHub",
+    "hero.sub":"مجاني · ملف تنفيذي واحد مكتفٍ ذاتيًا · دون بيئة تشغيل · يتطلب Windows 10/11",
+    "feat.eyebrow":"الميزات","feat.title":"أداة صغيرة بلا تنازلات",
+    "feat.sub":"كل ما تحتاجه لأتمتة مفتاح، ولا شيء زائد.",
+    "feat.1.t":"ضغط مستمر أو تبديل","feat.1.d":"يكرر طالما المفتاح مضغوط، أو اضغط مرة للبدء وأخرى للإيقاف. لكل قاعدة وضعها وفاصلها.",
+    "feat.2.t":"المفاتيح وأزرار الفأرة","feat.2.d":"يمكن أن يكون المشغّل والإخراج أي مفتاح لوحة مفاتيح أو زر فأرة — يسار، يمين، وسط، X1، X2.",
+    "feat.3.t":"تعمل مع الألعاب","feat.3.d":"تُحقَن المفاتيح كرموز مسح للأجهزة عبر <code>SendInput</code> وتُحتفظ لفترة قصيرة، فتلتقطها الألعاب القائمة على الاستطلاع وألعاب DirectInput بموثوقية.",
+    "feat.4.t":"نطاق حسب التطبيق","feat.4.d":"اقصر النقر السريع على تطبيقات محددة باسم العملية، أو اختر من البرامج قيد التشغيل. فارغ = في كل مكان.",
+    "feat.5.t":"شريط النظام والتشغيل التلقائي","feat.5.d":"الإغلاق يصغّر إلى الشريط؛ مفتاح رئيسي عام <code>F8</code> يبدّل كل شيء. التشغيل مع Windows اختياري.",
+    "feat.6.t":"13 لغة","feat.6.d":"واجهة مترجمة تُكتشف تلقائيًا من نظام التشغيل، بما في ذلك تخطيطات العربية والعبرية من اليمين إلى اليسار المعكوسة بالكامل.",
+    "how.eyebrow":"كيف تعمل","how.title":"جاهزة في أربع خطوات",
+    "step.1.t":"التثبيت","step.1.d":"نزّل <code>turbokey.exe</code> وشغّله. اقبل مطالبة UAC — الرفع يتيح لها الوصول إلى الألعاب التي تعمل كمسؤول.",
+    "step.2.t":"إضافة قاعدة","step.2.d":"اختر مفتاح التشغيل ومفتاح الإخراج والوضع والفاصل بالمللي ثانية، ثم انقر <b>إضافة</b>.",
+    "step.3.t":"التفعيل","step.3.d":"اضغط <code>F8</code> (أو فعّل المفتاح الرئيسي) لتسليح الأداة عالميًا.",
+    "step.4.t":"الإطلاق","step.4.d":"اضغط باستمرار أو انقر مفتاح التشغيل فيتكرر تلقائيًا. اضغط <code>F8</code> مجددًا عند الانتهاء.",
+    "how.note":"<b>كيف تبقى موثوقة؟</b> خطّاف لوحة مفاتيح منخفض المستوى يبتلع مفتاح التشغيل ويصدر نبضات نظيفة <code>ضغط → إمساك ~30 مللي ثانية → رفع</code>، موسومة كي لا تُعيد الأداة تشغيل نفسها أبدًا. الفاصل هو الفجوة بين الضغطات؛ السقف العملي نحو 25–30 في الثانية، وهو كافٍ لأن اللعبة تأخذ عيّنات لكل إطار.",
+    "lang.eyebrow":"مترجمة","lang.title":"متوفرة بـ 13 لغة",
+    "lang.sub":"تُكتشف تلقائيًا من Windows، وقابلة للتبديل داخل التطبيق. اقرأ الوثائق بلغتك على GitHub.",
+    "cta.allreleases":"كل الإصدارات",
+    "footer.text":"TurboKey — نقر تلقائي للمفاتيح على Windows. منشورة بموجب <a href='https://github.com/houko/turbokey/blob/main/LICENSE'>رخصة MIT</a>."
+  },
+  he:{
+    "page.title":"TurboKey — כלי לחיצה אוטומטית של מקשים ל-Windows",
+    "nav.features":"תכונות","nav.how":"איך זה עובד","nav.languages":"שפות",
+    "hero.pill":"Windows · ממשק מקורי · קוד פתוח <b>MIT</b>",
+    "hero.title":"הפכו כל מקש ל<span class='bolt'>נגינה מהירה</span>",
+    "hero.lead":"כלי קל ללחיצה אוטומטית ל-Windows. קשרו מקש כך שיחזור על עצמו — או על מקש אחר — אוטומטית, בזמן החזקה או כמתג הפעלה/כיבוי. לכל כלל מרווח משלו. עובד עם יישומים ומשחקים.",
+    "hero.download":"הורדה ל-Windows","hero.github":"צפייה ב-GitHub",
+    "hero.sub":"חינם · קובץ הרצה יחיד ועצמאי · ללא סביבת ריצה · דורש Windows 10/11",
+    "feat.eyebrow":"תכונות","feat.title":"כלי קטן, בלי פשרות",
+    "feat.sub":"כל מה שצריך כדי להפוך מקש לאוטומטי, ושום דבר מיותר.",
+    "feat.1.t":"החזקה או החלפה","feat.1.d":"חוזר כל עוד מקש לחוץ, או לחיצה אחת מתחילה ולחיצה נוספת עוצרת. לכל כלל מצב ומרווח משלו.",
+    "feat.2.t":"מקשים ולחצני עכבר","feat.2.d":"ההפעלה והפלט יכולים להיות כל מקש מקלדת או לחצן עכבר — שמאל, ימין, אמצעי, X1, X2.",
+    "feat.3.t":"עובד עם משחקים","feat.3.d":"המקשים מוזרקים כקודי סריקה של חומרה דרך <code>SendInput</code> ומוחזקים לרגע, כך שמשחקים מבוססי-דגימה ו-DirectInput דוגמים אותם באמינות.",
+    "feat.4.t":"היקף לפי יישום","feat.4.d":"הגבילו את הנגינה המהירה ליישומים מסוימים לפי שם תהליך, או בחרו מהתוכניות הרצות. ריק = בכל מקום.",
+    "feat.5.t":"מגש מערכת והפעלה אוטומטית","feat.5.d":"סגירה ממזערת למגש; מתג ראשי גלובלי <code>F8</code> מחליף הכול. הפעלה עם Windows אופציונלית.",
+    "feat.6.t":"13 שפות","feat.6.d":"ממשק מתורגם המזוהה אוטומטית ממערכת ההפעלה, כולל פריסות ערבית ועברית מימין לשמאל ממוראות לחלוטין.",
+    "how.eyebrow":"איך זה עובד","how.title":"מוכן בארבעה צעדים",
+    "step.1.t":"התקנה","step.1.d":"הורידו את <code>turbokey.exe</code> והפעילו. אשרו את בקשת ה-UAC — ההרשאות המוגברות מאפשרות להגיע למשחקים הרצים כמנהל.",
+    "step.2.t":"הוספת כלל","step.2.d":"בחרו מקש הפעלה, מקש פלט, מצב ומרווח במילישניות, ואז לחצו <b>הוסף</b>.",
+    "step.3.t":"הפעלה","step.3.d":"לחצו <code>F8</code> (או סמנו את המתג הראשי) כדי לחמש את הכלי גלובלית.",
+    "step.4.t":"ירי","step.4.d":"החזיקו או הקישו על מקש ההפעלה והוא חוזר מעצמו. לחצו <code>F8</code> שוב כשסיימתם.",
+    "how.note":"<b>איך זה נשאר אמין?</b> וו מקלדת ברמה נמוכה בולע את מקש ההפעלה ופולט פולסים נקיים <code>למטה → החזקה ~30 מ\"ש → למעלה</code>, מתויגים כך שהכלי לעולם אינו מפעיל את עצמו מחדש. המרווח הוא הפער בין הלחיצות; התקרה המעשית היא כ-25–30 בשנייה, די והותר כי המשחק דוגם בכל פריים.",
+    "lang.eyebrow":"מתורגם","lang.title":"זמין ב-13 שפות",
+    "lang.sub":"מזוהה אוטומטית מ-Windows, ניתן להחלפה בתוך היישום. קראו את התיעוד בשפה שלכם ב-GitHub.",
+    "cta.allreleases":"כל הגרסאות",
+    "footer.text":"TurboKey — לחיצה אוטומטית של מקשים ל-Windows. מופץ תחת <a href='https://github.com/houko/turbokey/blob/main/LICENSE'>רישיון MIT</a>."
+  }
+};
+
+(function(){
+  var SUPPORTED = Object.keys(LANG_NAMES);
+
+  // Map a browser language tag to one of our supported codes.
+  function resolve(tag){
+    if(!tag) return null;
+    tag = tag.toLowerCase();
+    if(tag.indexOf("zh")===0){
+      return (tag.indexOf("tw")>=0||tag.indexOf("hk")>=0||tag.indexOf("hant")>=0) ? "zh-Hant" : "zh";
+    }
+    var base = tag.split("-")[0];
+    if(SUPPORTED.indexOf(base)>=0) return base;
+    return null;
+  }
+
+  function pick(){
+    var saved = null;
+    try{ saved = localStorage.getItem("tk_lang"); }catch(e){}
+    if(saved && I18N[saved]) return saved;
+    var langs = navigator.languages || [navigator.language];
+    for(var i=0;i<langs.length;i++){ var r=resolve(langs[i]); if(r) return r; }
+    return "en";
+  }
+
+  function apply(lang){
+    var dict = I18N[lang] || I18N.en;
+    document.documentElement.lang = lang;
+    document.documentElement.dir = RTL[lang] ? "rtl" : "ltr";
+    if(dict["page.title"]) document.title = dict["page.title"];
+    var nodes = document.querySelectorAll("[data-i18n]");
+    for(var i=0;i<nodes.length;i++){
+      var k = nodes[i].getAttribute("data-i18n");
+      if(dict[k]!=null) nodes[i].innerHTML = dict[k];
+    }
+    try{ localStorage.setItem("tk_lang", lang); }catch(e){}
+  }
+
+  // Build the language selector.
+  var sel = document.getElementById("langsel");
+  var order = ["en","zh","zh-Hant","ja","ko","es","fr","de","ru","pt","it","ar","he"];
+  for(var i=0;i<order.length;i++){
+    var o = document.createElement("option");
+    o.value = order[i]; o.textContent = LANG_NAMES[order[i]];
+    sel.appendChild(o);
+  }
+  var current = pick();
+  sel.value = current;
+  apply(current);
+  sel.addEventListener("change", function(){ apply(sel.value); });
+})();
+</script>
 
 </body>
 </html>
