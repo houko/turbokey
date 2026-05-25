@@ -173,26 +173,42 @@ func (mw *mainWindow) onPick() {
 	model := &winPickModel{items: winput.VisibleWindows()}
 	model.checked = make([]bool, len(model.items))
 
+	// Pre-check apps already in the target list.
+	current := map[string]bool{}
+	for _, t := range parseTargets(mw.leTargets.Text()) {
+		current[strings.ToLower(t)] = true
+	}
+	for i, w := range model.items {
+		model.checked[i] = current[strings.ToLower(w.Exe)]
+	}
+
 	var dlg *walk.Dialog
 	var okPB *walk.PushButton
 	commit := func() {
-		cur := parseTargets(mw.leTargets.Text())
-		for i, w := range model.items {
-			if !model.checked[i] {
-				continue
-			}
-			dup := false
-			for _, c := range cur {
-				if strings.EqualFold(c, w.Exe) {
-					dup = true
-					break
-				}
-			}
-			if !dup {
-				cur = append(cur, w.Exe)
+		// Keep targets that aren't shown in the list (e.g. apps not running),
+		// then apply the checkbox state for the listed apps (tick = keep/add,
+		// untick = remove).
+		listed := map[string]bool{}
+		for _, w := range model.items {
+			listed[strings.ToLower(w.Exe)] = true
+		}
+		var result []string
+		seen := map[string]bool{}
+		for _, t := range parseTargets(mw.leTargets.Text()) {
+			lc := strings.ToLower(t)
+			if !listed[lc] && !seen[lc] {
+				result = append(result, t)
+				seen[lc] = true
 			}
 		}
-		mw.leTargets.SetText(strings.Join(cur, ", "))
+		for i, w := range model.items {
+			lc := strings.ToLower(w.Exe)
+			if model.checked[i] && !seen[lc] {
+				result = append(result, w.Exe)
+				seen[lc] = true
+			}
+		}
+		mw.leTargets.SetText(strings.Join(result, ", "))
 		mw.applyTargets()
 		dlg.Accept()
 	}
