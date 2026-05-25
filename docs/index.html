@@ -119,6 +119,47 @@
   footer .wrap{display:flex; flex-wrap:wrap; gap:14px; align-items:center; justify-content:space-between}
   footer a{color:var(--muted)}
   footer a:hover{color:var(--fg)}
+
+  /* anchor offset so the sticky nav doesn't cover section headings */
+  section[id]{scroll-margin-top:64px}
+
+  /* subtle grid texture behind the hero, faded out toward the edges */
+  .hero::before{content:""; position:absolute; inset:0; pointer-events:none;
+    background-image:
+      linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),
+      linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+    background-size:42px 42px;
+    -webkit-mask-image:radial-gradient(680px 380px at 50% 0,#000,transparent 75%);
+    mask-image:radial-gradient(680px 380px at 50% 0,#000,transparent 75%)}
+  .hero .wrap{position:relative}
+
+  /* hover lift on cards and steps */
+  .card,.step{transition:transform .18s, border-color .18s, box-shadow .18s}
+  .card:hover,.step:hover{transform:translateY(-3px); border-color:#33415c;
+    box-shadow:0 16px 36px -22px rgba(0,0,0,.9)}
+  .lang{transition:color .16s, border-color .16s}
+  .lang:hover{color:var(--fg); border-color:#36415a; text-decoration:none}
+
+  /* latest-version chip under the hero CTAs */
+  .verchip{display:none; align-items:center; gap:8px; margin-top:18px;
+    font-size:13px; color:var(--muted); border:1px solid var(--line);
+    background:rgba(255,255,255,.02); padding:5px 13px; border-radius:999px}
+  .verchip.show{display:inline-flex}
+  .verchip b{color:var(--fg); font-weight:600}
+  .verchip .dot{width:7px; height:7px; border-radius:50%; background:#3fb950;
+    box-shadow:0 0 0 3px rgba(63,185,80,.18)}
+
+  /* reveal-on-scroll (class added by JS, so no-JS still shows everything) */
+  .reveal{opacity:0; transform:translateY(16px); transition:opacity .6s ease, transform .6s ease}
+  .reveal.in{opacity:1; transform:none}
+  @media(prefers-reduced-motion:reduce){
+    .reveal{opacity:1; transform:none; transition:none}
+    html{scroll-behavior:auto}
+  }
+
+  /* keyboard focus visibility */
+  a:focus-visible,.btn:focus-visible,.langsel:focus-visible{outline:2px solid var(--blue); outline-offset:3px; border-radius:8px}
+  .btn:active{transform:translateY(0)}
 </style>
 </head>
 <body>
@@ -152,6 +193,7 @@
       <span data-i18n="hero.github">View on GitHub</span>
     </a>
   </div>
+  <span class="verchip" id="verchip"></span>
   <p class="sub" data-i18n="hero.sub">Free · single self-contained .exe · no runtime to install · requires Windows 10/11</p>
   <div class="shot"><img src="screenshot.png" alt="TurboKey" loading="lazy"></div>
 </div></header>
@@ -667,6 +709,37 @@ var I18N = {
   sel.value = current;
   apply(current);
   sel.addEventListener("change", function(){ apply(sel.value); });
+})();
+
+// Reveal sections as they scroll into view.
+(function(){
+  if(!("IntersectionObserver" in window)) return;
+  var sel = ".hero .lead,.hero .cta,.verchip,.shot,.card,.step,.note,.sec-h,.sec-p,.langbar";
+  var items = document.querySelectorAll(sel);
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){
+      if(e.isIntersecting){ e.target.classList.add("in"); io.unobserve(e.target); }
+    });
+  }, {rootMargin:"0px 0px -8% 0px", threshold:.05});
+  for(var i=0;i<items.length;i++){ items[i].classList.add("reveal"); io.observe(items[i]); }
+})();
+
+// Show the latest release version + size in the hero chip (best effort).
+(function(){
+  var chip = document.getElementById("verchip");
+  if(!chip || !("fetch" in window)) return;
+  fetch("https://api.github.com/repos/houko/turbokey/releases/latest",
+        {headers:{Accept:"application/vnd.github+json"}})
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(d){
+      if(!d || !d.tag_name) return;
+      var size = 0;
+      if(d.assets) d.assets.forEach(function(a){ if(/turbokey\.exe/i.test(a.name)) size = a.size; });
+      var mb = size ? " · " + (size/1048576).toFixed(1) + " MB" : "";
+      chip.innerHTML = '<span class="dot"></span>Latest <b>' + d.tag_name + '</b>' + mb;
+      chip.classList.add("show");
+    })
+    .catch(function(){});
 })();
 </script>
 
