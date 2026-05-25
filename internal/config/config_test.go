@@ -85,6 +85,48 @@ func TestLoadDefaultsAndSkips(t *testing.T) {
 	}
 }
 
+func TestResolvedMasterHotkey(t *testing.T) {
+	cases := []struct {
+		name string
+		in   string
+		want uint16
+	}{
+		{"empty defaults to F8", "", 0x77},
+		{"valid F9", "F9", 0x78},
+		{"unknown defaults to F8", "Bogus", 0x77},
+		{"mouse button rejected -> F8", "Mouse Left", 0x77},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			got := (&File{MasterHotkey: c.in}).ResolvedMasterHotkey()
+			if got != c.want {
+				t.Errorf("ResolvedMasterHotkey(%q) = 0x%X, want 0x%X", c.in, got, c.want)
+			}
+		})
+	}
+	if (*File)(nil).ResolvedMasterHotkey() != 0x77 {
+		t.Error("nil receiver should also default to F8")
+	}
+}
+
+// TestSaveAtomic confirms saveTo doesn't leave a truncated config when called
+// repeatedly: the result is always a fully readable file.
+func TestSaveAtomic(t *testing.T) {
+	p := filepath.Join(t.TempDir(), "config.json")
+	for i := 0; i < 5; i++ {
+		if err := saveTo(p, &File{Lang: "en"}); err != nil {
+			t.Fatal(err)
+		}
+		out, err := loadFrom(p)
+		if err != nil {
+			t.Fatalf("load after save #%d: %v", i, err)
+		}
+		if out.Lang != "en" {
+			t.Fatalf("lang after save #%d = %q", i, out.Lang)
+		}
+	}
+}
+
 func TestMissingFileIsEmpty(t *testing.T) {
 	out, err := loadFrom(filepath.Join(t.TempDir(), "absent.json"))
 	if err != nil {

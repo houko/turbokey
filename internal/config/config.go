@@ -49,6 +49,21 @@ type File struct {
 	Rules        []*Rule
 }
 
+// ResolvedMasterHotkey returns the virtual-key code of the saved master hotkey,
+// defaulting to F8 (0x77) if missing, unknown, or a mouse button (which would
+// be nonsense as a global hotkey and would break the picker's index).
+func (f *File) ResolvedMasterHotkey() uint16 {
+	const defaultVK = 0x77 // VK_F8
+	if f == nil || f.MasterHotkey == "" {
+		return defaultVK
+	}
+	vk, ok := keys.VK(f.MasterHotkey)
+	if !ok || keys.IsMouse(vk) {
+		return defaultVK
+	}
+	return vk
+}
+
 // --- JSON serialization (human-readable, keyed by key name) ---
 
 type ruleDTO struct {
@@ -150,5 +165,12 @@ func saveTo(p string, f *File) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(p, data, 0644)
+	// Write to a sibling tmp file, then rename over the real file. os.Rename uses
+	// MoveFileEx with REPLACE_EXISTING on Windows, so a crash mid-write at worst
+	// leaves a leftover .tmp instead of a truncated config.
+	tmp := p + ".tmp"
+	if err := os.WriteFile(tmp, data, 0644); err != nil {
+		return err
+	}
+	return os.Rename(tmp, p)
 }

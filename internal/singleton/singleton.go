@@ -16,10 +16,18 @@ const mutexName = `Local\TurboKey-SingleInstance`
 
 // keep the handle alive for the lifetime of the process so the named mutex
 // stays owned (Windows releases it on process death).
-//
-//lint:ignore U1000 written-only by design; the kept reference prevents the
-// handle from being closed before the process exits.
 var heldMutex windows.Handle
+
+// Release closes the held named mutex so a sibling instance can take it over.
+// Used by the language-change relaunch path, where the parent must release the
+// mutex BEFORE the child reaches Acquire — otherwise the child would see the
+// dying parent still owning it and exit, leaving no instance running.
+func Release() {
+	if heldMutex != 0 {
+		windows.CloseHandle(heldMutex)
+		heldMutex = 0
+	}
+}
 
 // Acquire returns true if this is the first instance. If another instance
 // already holds the mutex it best-effort brings its window to the front and

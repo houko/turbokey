@@ -142,6 +142,34 @@ func TestTargetGating(t *testing.T) {
 	}
 }
 
+// Regression: turning the master switch off mid-press used to leave pressed[vk]
+// set, so the next real press was misread as an OS auto-repeat and the worker
+// never started.
+func TestMasterOffClearsPressedState(t *testing.T) {
+	e, _, _ := newTest(t)
+	e.SetMaster(true)
+	e.SetRules([]*config.Rule{holdRule(0x4A)})
+
+	e.dispatch(0x4A, true, false) // press (consumed, worker started)
+	if active(e) != 1 {
+		t.Fatalf("expected 1 worker, got %d", active(e))
+	}
+
+	e.SetMaster(false) // user toggles master off WHILE the key is held
+	if active(e) != 0 {
+		t.Fatalf("master off should stop workers, got %d", active(e))
+	}
+
+	// Re-enable master, press the same key again — must start a worker.
+	e.SetMaster(true)
+	if !e.dispatch(0x4A, true, false) {
+		t.Fatal("trigger down after re-enabling master should be swallowed")
+	}
+	if active(e) != 1 {
+		t.Fatalf("trigger down after re-enabling master should start a worker, got %d", active(e))
+	}
+}
+
 func TestDisabledAndUnknownPassThrough(t *testing.T) {
 	e, _, _ := newTest(t)
 	e.SetMaster(true)

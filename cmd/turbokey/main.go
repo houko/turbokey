@@ -9,7 +9,6 @@ import (
 	"turbokey/internal/config"
 	"turbokey/internal/engine"
 	"turbokey/internal/i18n"
-	"turbokey/internal/keys"
 	"turbokey/internal/singleton"
 	"turbokey/internal/ui"
 )
@@ -30,13 +29,7 @@ func main() {
 
 	i18n.Init(cfg.Lang)
 
-	hotkey := uint16(0x77) // VK_F8 default
-	if cfg.MasterHotkey != "" {
-		if vk, ok := keys.VK(cfg.MasterHotkey); ok {
-			hotkey = vk
-		}
-	}
-	e := engine.New(hotkey)
+	e := engine.New(cfg.ResolvedMasterHotkey())
 
 	if err := ui.Run(e, cfg); err != nil {
 		panic(err)

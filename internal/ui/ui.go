@@ -23,6 +23,7 @@ import (
 	"turbokey/internal/engine"
 	"turbokey/internal/i18n"
 	"turbokey/internal/keys"
+	"turbokey/internal/singleton"
 	"turbokey/internal/winput"
 )
 
@@ -493,8 +494,10 @@ func (mw *mainWindow) onLangChanged() {
 }
 
 // relaunch starts a fresh instance (inheriting this elevated process's rights,
-// so no new UAC prompt) and exits the current one.
+// so no new UAC prompt) and exits the current one. The singleton mutex is
+// released first so the child doesn't race with the dying parent on it.
 func (mw *mainWindow) relaunch() {
+	singleton.Release()
 	if exe, err := os.Executable(); err == nil {
 		cmd := exec.Command(exe)
 		cmd.Dir = filepath.Dir(exe)
@@ -568,13 +571,7 @@ func (mw *mainWindow) setupTray() {
 // GUI message loop until the window closes.
 func Run(eng *engine.Engine, cfg *config.File) error {
 	model := &ruleModel{rules: cfg.Rules}
-	hotkey := uint16(0x77) // VK_F8 default
-	if cfg.MasterHotkey != "" {
-		if vk, ok := keys.VK(cfg.MasterHotkey); ok {
-			hotkey = vk
-		}
-	}
-	mw := &mainWindow{eng: eng, model: model, lang: cfg.Lang, targets: cfg.Targets, hotkey: hotkey}
+	mw := &mainWindow{eng: eng, model: model, lang: cfg.Lang, targets: cfg.Targets, hotkey: cfg.ResolvedMasterHotkey()}
 
 	outputNames := append([]string{i18n.T("output.same")}, keys.Names...)
 

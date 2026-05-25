@@ -92,8 +92,7 @@ func (e *Engine) targetActiveLocked() bool {
 func (e *Engine) SetRules(rules []*config.Rule) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
-	e.stopAllLocked()
-	e.pressed = map[uint16]bool{}
+	e.stopAllLocked() // also clears e.pressed
 	e.rules = rules
 	e.byTrigger = make(map[uint16]*config.Rule, len(rules))
 	for _, r := range rules {
@@ -133,6 +132,10 @@ func (e *Engine) stopAllLocked() {
 		close(stop)
 		delete(e.workers, vk)
 	}
+	// Reset consumed-press tracking too. Otherwise a key whose down we consumed
+	// stays "pressed" forever once its worker is stopped (e.g. master turned off
+	// mid-press), and the next real keydown is misread as an auto-repeat.
+	e.pressed = map[uint16]bool{}
 }
 
 func (e *Engine) startRepeatLocked(r *config.Rule) {

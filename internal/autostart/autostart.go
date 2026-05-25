@@ -34,5 +34,7 @@ func Set(on bool) error {
 	if err != nil {
 		return err
 	}
-	return schtasks("/create", "/tn", taskName, "/tr", exe, "/sc", "onlogon", "/rl", "highest", "/f")
+	// Wrap the exe path in quotes inside the /tr value so schtasks parses it as
+	// a single program path even when the path contains spaces.
+	return schtasks("/create", "/tn", taskName, "/tr", `"`+exe+`"`, "/sc", "onlogon", "/rl", "highest", "/f")
 }
