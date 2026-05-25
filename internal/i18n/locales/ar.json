@@ -28,7 +28,8 @@
   "tray.master": "تفعيل النقر (F8)",
   "tray.exit": "خروج",
   "lbl.scope": "التطبيقات المفعّلة (فارغ = الكل)",
-  "btn.capture": "التقاط",
+  "btn.capture": "اختيار تطبيق…",
+  "btn.ok": "موافق",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "تم التصغير إلى شريط النظام. انقر بزر الفأرة الأيمن على الأيقونة للخروج."
 }

@@ -4,13 +4,11 @@
 package ui
 
 import (
-	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync/atomic"
-	"time"
 
 	"github.com/lxn/walk"
 	. "github.com/lxn/walk/declarative"
@@ -68,7 +66,6 @@ type mainWindow struct {
 	lblStatus  *walk.Label
 	cbLang     *walk.ComboBox
 	leTargets  *walk.LineEdit
-	btnCapture *walk.PushButton
 	leName     *walk.LineEdit
 	cbTrigger  *walk.ComboBox
 	cbOutput   *walk.ComboBox
@@ -124,32 +121,61 @@ func (mw *mainWindow) applyTargets() {
 	mw.save()
 }
 
-// onCapture grabs the foreground app after a short countdown (giving the user
-// time to switch to it) and adds its process name to the target list.
-func (mw *mainWindow) onCapture() {
-	go func() {
-		for i := 3; i >= 1; i-- {
-			n := i
-			mw.Synchronize(func() { mw.btnCapture.SetText(fmt.Sprintf("%d…", n)) })
-			time.Sleep(900 * time.Millisecond)
+// addTarget appends a process name to the target list (deduplicated) and applies it.
+func (mw *mainWindow) addTarget(exe string) {
+	if exe == "" {
+		return
+	}
+	cur := parseTargets(mw.leTargets.Text())
+	for _, c := range cur {
+		if strings.EqualFold(c, exe) {
+			return // already listed
 		}
-		name := winput.ForegroundProcessName()
-		mw.Synchronize(func() {
-			mw.btnCapture.SetText(i18n.T("btn.capture"))
-			if name == "" || strings.EqualFold(name, "turbokey.exe") {
-				return
-			}
-			for _, c := range parseTargets(mw.leTargets.Text()) {
-				if strings.EqualFold(c, name) {
-					return // already listed
-				}
-			}
-			cur := parseTargets(mw.leTargets.Text())
-			cur = append(cur, name)
-			mw.leTargets.SetText(strings.Join(cur, ", "))
-			mw.applyTargets()
-		})
-	}()
+	}
+	cur = append(cur, exe)
+	mw.leTargets.SetText(strings.Join(cur, ", "))
+	mw.applyTargets()
+}
+
+// onPick shows a list of running apps and adds the chosen one to the targets.
+func (mw *mainWindow) onPick() {
+	wins := winput.VisibleWindows()
+	items := make([]string, len(wins))
+	for i, w := range wins {
+		items[i] = w.Title + "  —  " + w.Exe
+	}
+
+	var dlg *walk.Dialog
+	var lb *walk.ListBox
+	var okPB *walk.PushButton
+	choose := func() {
+		if i := lb.CurrentIndex(); i >= 0 && i < len(wins) {
+			mw.addTarget(wins[i].Exe)
+		}
+		dlg.Accept()
+	}
+
+	_, _ = Dialog{
+		AssignTo:      &dlg,
+		Title:         i18n.T("btn.capture"),
+		MinSize:       Size{Width: 460, Height: 380},
+		DefaultButton: &okPB,
+		Layout:        VBox{},
+		Children: []Widget{
+			ListBox{
+				AssignTo:        &lb,
+				Model:           items,
+				OnItemActivated: choose, // double-click a row
+			},
+			Composite{
+				Layout: HBox{},
+				Children: []Widget{
+					HSpacer{},
+					PushButton{AssignTo: &okPB, Text: i18n.T("btn.ok"), OnClicked: choose},
+				},
+			},
+		},
+	}.Run(mw)
 }
 
 func (mw *mainWindow) updateStatus(on bool) {
@@ -363,7 +389,7 @@ func Run(eng *engine.Engine, cfg *config.File) error {
 				Children: []Widget{
 					Label{Text: i18n.T("lbl.scope")},
 					LineEdit{AssignTo: &mw.leTargets, OnEditingFinished: mw.applyTargets},
-					PushButton{AssignTo: &mw.btnCapture, Text: i18n.T("btn.capture"), OnClicked: mw.onCapture, MaxSize: Size{Width: 120}},
+					PushButton{Text: i18n.T("btn.capture"), OnClicked: mw.onPick, MaxSize: Size{Width: 130}},
 				},
 			},
 			TableView{

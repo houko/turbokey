@@ -123,9 +123,9 @@ By default rapid-fire is active in every application. To restrict it, fill the
 separated). Rapid-fire then only engages while one of those apps is in the
 foreground; elsewhere your keys behave normally.
 
-Don't know the process name? Click **Capture**, then switch to the target app
-within the 3-second countdown — its executable name is added for you. The master
-F8 hotkey always works regardless of the active app.
+Don't know the process name? Click **Choose app…** and pick it from the list of
+currently running programs (shown by window title and executable). The master F8
+hotkey always works regardless of the active app.
 
 ## Language
 

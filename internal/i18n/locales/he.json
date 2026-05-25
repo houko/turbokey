@@ -28,7 +28,8 @@
   "tray.master": "הפעל הקלקה (F8)",
   "tray.exit": "יציאה",
   "lbl.scope": "אפליקציות פעילות (ריק = הכול)",
-  "btn.capture": "לכידה",
+  "btn.capture": "בחר אפליקציה…",
+  "btn.ok": "אישור",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "מוזער למגש המערכת. לחץ לחיצה ימנית על הסמל כדי לצאת."
 }

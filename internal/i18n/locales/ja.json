@@ -28,7 +28,8 @@
   "tray.master": "連打を有効 (F8)",
   "tray.exit": "終了",
   "lbl.scope": "対象アプリ (空=全部)",
-  "btn.capture": "前面を取得",
+  "btn.capture": "アプリを選択…",
+  "btn.ok": "OK",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "トレイに最小化しました。アイコンを右クリックで終了します。"
 }

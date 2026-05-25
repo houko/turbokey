@@ -28,7 +28,8 @@
   "tray.master": "Aktivieren (F8)",
   "tray.exit": "Beenden",
   "lbl.scope": "Aktive Apps (leer = alle)",
-  "btn.capture": "Erfassen",
+  "btn.capture": "App wählen…",
+  "btn.ok": "OK",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "In den Infobereich minimiert. Rechtsklick auf das Symbol zum Beenden."
 }

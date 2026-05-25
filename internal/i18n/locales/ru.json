@@ -28,7 +28,8 @@
   "tray.master": "Включить (F8)",
   "tray.exit": "Выход",
   "lbl.scope": "Активные прил. (пусто = все)",
-  "btn.capture": "Захват",
+  "btn.capture": "Выбрать прил.…",
+  "btn.ok": "ОК",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "Свёрнуто в трей. Щёлкните значок правой кнопкой, чтобы выйти."
 }

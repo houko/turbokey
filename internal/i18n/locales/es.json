@@ -28,7 +28,8 @@
   "tray.master": "Activar (F8)",
   "tray.exit": "Salir",
   "lbl.scope": "Apps activas (vacío = todas)",
-  "btn.capture": "Capturar",
+  "btn.capture": "Elegir app…",
+  "btn.ok": "Aceptar",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "Minimizado a la bandeja. Clic derecho en el icono para salir."
 }

@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"runtime"
 	"strings"
+	"sync"
 	"unsafe"
 
 	"golang.org/x/sys/windows"
@@ -92,19 +93,21 @@ var (
 	procOpenProcess                = kernel32.NewProc("OpenProcess")
 	procCloseHandle                = kernel32.NewProc("CloseHandle")
 	procQueryFullProcessImageNameW = kernel32.NewProc("QueryFullProcessImageNameW")
+	procEnumWindows                = user32.NewProc("EnumWindows")
+	procIsWindowVisible            = user32.NewProc("IsWindowVisible")
+	procGetWindowTextW             = user32.NewProc("GetWindowTextW")
+	procGetWindowTextLengthW       = user32.NewProc("GetWindowTextLengthW")
+	procGetWindowLongPtrW          = user32.NewProc("GetWindowLongPtrW")
 )
 
-const processQueryLimitedInformation = 0x1000
+const (
+	processQueryLimitedInformation = 0x1000
+	gwlExStyle                     = ^uintptr(0) - 19 // GWL_EXSTYLE (-20)
+	wsExToolWindow                 = 0x00000080
+)
 
-// ForegroundProcessName returns the lowercase executable base name of the process
-// owning the current foreground window (e.g. "dnfgame.exe"), or "" on failure.
-func ForegroundProcessName() string {
-	hwnd, _, _ := procGetForegroundWindow.Call()
-	if hwnd == 0 {
-		return ""
-	}
-	var pid uint32
-	procGetWindowThreadProcessId.Call(hwnd, uintptr(unsafe.Pointer(&pid)))
+// processExeName returns the lowercase executable base name for a process id.
+func processExeName(pid uint32) string {
 	if pid == 0 {
 		return ""
 	}
@@ -120,6 +123,79 @@ func ForegroundProcessName() string {
 		return ""
 	}
 	return strings.ToLower(filepath.Base(windows.UTF16ToString(buf[:n])))
+}
+
+// ForegroundProcessName returns the lowercase executable base name of the process
+// owning the current foreground window (e.g. "dnfgame.exe"), or "" on failure.
+func ForegroundProcessName() string {
+	hwnd, _, _ := procGetForegroundWindow.Call()
+	if hwnd == 0 {
+		return ""
+	}
+	var pid uint32
+	procGetWindowThreadProcessId.Call(hwnd, uintptr(unsafe.Pointer(&pid)))
+	return processExeName(pid)
+}
+
+// WindowInfo is one entry in the running-apps picker: a window title and the
+// owning process's executable name.
+type WindowInfo struct {
+	Title string
+	Exe   string
+}
+
+// One reusable EnumWindows callback (NewCallback allocations are never freed, so
+// we must not create one per call). enumAcc is guarded by enumMu.
+var (
+	enumMu  sync.Mutex
+	enumAcc []WindowInfo
+	enumCb  = windows.NewCallback(enumProc)
+)
+
+func enumProc(hwnd, _ uintptr) uintptr {
+	if r, _, _ := procIsWindowVisible.Call(hwnd); r == 0 {
+		return 1
+	}
+	if n, _, _ := procGetWindowTextLengthW.Call(hwnd); n == 0 {
+		return 1
+	}
+	if ex, _, _ := procGetWindowLongPtrW.Call(hwnd, gwlExStyle); ex&wsExToolWindow != 0 {
+		return 1 // skip tool windows
+	}
+	buf := make([]uint16, 256)
+	procGetWindowTextW.Call(hwnd, uintptr(unsafe.Pointer(&buf[0])), uintptr(len(buf)))
+	title := windows.UTF16ToString(buf)
+	if title == "" {
+		return 1
+	}
+	var pid uint32
+	procGetWindowThreadProcessId.Call(hwnd, uintptr(unsafe.Pointer(&pid)))
+	exe := processExeName(pid)
+	if exe == "" || exe == "turbokey.exe" {
+		return 1
+	}
+	enumAcc = append(enumAcc, WindowInfo{Title: title, Exe: exe})
+	return 1
+}
+
+// VisibleWindows lists visible top-level windows that have a title, one entry per
+// distinct owning executable, for the running-apps picker.
+func VisibleWindows() []WindowInfo {
+	enumMu.Lock()
+	defer enumMu.Unlock()
+	enumAcc = nil
+	procEnumWindows.Call(enumCb, 0)
+	seen := map[string]bool{}
+	var out []WindowInfo
+	for _, w := range enumAcc {
+		if seen[w.Exe] {
+			continue
+		}
+		seen[w.Exe] = true
+		out = append(out, w)
+	}
+	enumAcc = nil
+	return out
 }
 
 func moduleHandle() uintptr {
