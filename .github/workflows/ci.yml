@@ -1,0 +1,54 @@
+name: CI
+
+# Lint, test and build on every push and pull request. Releasing is handled
+# separately by release.yml (only on push to main).
+on:
+  push:
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+      - 'docs/**'
+  pull_request:
+    paths-ignore:
+      - '**.md'
+      - 'LICENSE'
+      - 'docs/**'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-go@v6
+        with:
+          go-version-file: go.mod
+          cache: true
+      # unsafeptr is disabled: converting a hook's lParam (a foreign pointer
+      # passed as uintptr) to a struct pointer is the standard, safe win32 idiom.
+      - run: go vet -unsafeptr=false ./...
+      - name: staticcheck
+        run: |
+          go install honnef.co/go/tools/cmd/staticcheck@latest
+          staticcheck ./...
+      - run: go test ./...
+      - name: Build Windows executable
+        shell: bash
+        run: |
+          go install github.com/akavel/rsrc@latest
+          "$(go env GOPATH)/bin/rsrc" -manifest cmd/turbokey/app.manifest -ico cmd/turbokey/icon.ico -arch amd64 -o cmd/turbokey/rsrc_windows_amd64.syso
+          GOOS=windows GOARCH=amd64 CGO_ENABLED=0 \
+            go build -trimpath \
+              -ldflags "-H windowsgui -s -w -X turbokey/internal/buildinfo.Version=ci" \
+              -o turbokey.exe ./cmd/turbokey
+      - uses: actions/upload-artifact@v4
+        with:
+          name: turbokey-exe
+          path: turbokey.exe
+          if-no-files-found: error
