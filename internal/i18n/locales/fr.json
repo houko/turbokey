@@ -27,6 +27,8 @@
   "tray.show": "Afficher la fenêtre",
   "tray.master": "Activer (F8)",
   "tray.exit": "Quitter",
+  "lbl.scope": "Apps actives (vide = toutes)",
+  "btn.capture": "Capturer",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "Réduit dans la barre d'état. Clic droit sur l'icône pour quitter."
 }

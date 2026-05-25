@@ -5,7 +5,9 @@
 package winput
 
 import (
+	"path/filepath"
 	"runtime"
+	"strings"
 	"unsafe"
 
 	"golang.org/x/sys/windows"
@@ -84,7 +86,41 @@ var (
 
 	kernel32             = windows.NewLazySystemDLL("kernel32.dll")
 	procGetModuleHandleW = kernel32.NewProc("GetModuleHandleW")
+
+	procGetForegroundWindow        = user32.NewProc("GetForegroundWindow")
+	procGetWindowThreadProcessId   = user32.NewProc("GetWindowThreadProcessId")
+	procOpenProcess                = kernel32.NewProc("OpenProcess")
+	procCloseHandle                = kernel32.NewProc("CloseHandle")
+	procQueryFullProcessImageNameW = kernel32.NewProc("QueryFullProcessImageNameW")
 )
+
+const processQueryLimitedInformation = 0x1000
+
+// ForegroundProcessName returns the lowercase executable base name of the process
+// owning the current foreground window (e.g. "dnfgame.exe"), or "" on failure.
+func ForegroundProcessName() string {
+	hwnd, _, _ := procGetForegroundWindow.Call()
+	if hwnd == 0 {
+		return ""
+	}
+	var pid uint32
+	procGetWindowThreadProcessId.Call(hwnd, uintptr(unsafe.Pointer(&pid)))
+	if pid == 0 {
+		return ""
+	}
+	h, _, _ := procOpenProcess.Call(processQueryLimitedInformation, 0, uintptr(pid))
+	if h == 0 {
+		return ""
+	}
+	defer procCloseHandle.Call(h)
+	buf := make([]uint16, 260)
+	n := uint32(len(buf))
+	r, _, _ := procQueryFullProcessImageNameW.Call(h, 0, uintptr(unsafe.Pointer(&buf[0])), uintptr(unsafe.Pointer(&n)))
+	if r == 0 {
+		return ""
+	}
+	return strings.ToLower(filepath.Base(windows.UTF16ToString(buf[:n])))
+}
 
 func moduleHandle() uintptr {
 	h, _, _ := procGetModuleHandleW.Call(0)

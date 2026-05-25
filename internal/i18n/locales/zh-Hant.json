@@ -27,6 +27,8 @@
   "tray.show": "顯示主介面",
   "tray.master": "啟用連發 (F8)",
   "tray.exit": "結束",
+  "lbl.scope": "生效程式(空=全部)",
+  "btn.capture": "抓取前台",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "已最小化到系統匣。右鍵圖示可結束。"
 }

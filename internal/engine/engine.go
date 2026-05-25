@@ -5,6 +5,7 @@
 package engine
 
 import (
+	"strings"
 	"sync"
 	"time"
 	"unsafe"
@@ -27,7 +28,9 @@ type Engine struct {
 	rules     []*config.Rule
 	byTrigger map[uint16]*config.Rule
 
-	pressed map[uint16]bool          // trigger keys currently held (debounces OS auto-repeat)
+	targets map[string]bool // lowercase exe names the tool acts in (empty = all apps)
+
+	pressed map[uint16]bool          // trigger keys we currently own (consumed the press)
 	workers map[uint16]chan struct{} // active repeat workers, keyed by trigger VK
 
 	// OnMasterChange is invoked when the master switch flips via the global
@@ -40,9 +43,32 @@ func New(masterHotkeyVK uint16) *Engine {
 	return &Engine{
 		masterHotkeyVK: masterHotkeyVK,
 		byTrigger:      map[uint16]*config.Rule{},
+		targets:        map[string]bool{},
 		pressed:        map[uint16]bool{},
 		workers:        map[uint16]chan struct{}{},
 	}
+}
+
+// SetTargets restricts rapid-fire to the given process exe names (case-insensitive).
+// An empty list means it applies in every application.
+func (e *Engine) SetTargets(names []string) {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	e.targets = make(map[string]bool, len(names))
+	for _, n := range names {
+		if n = strings.ToLower(strings.TrimSpace(n)); n != "" {
+			e.targets[n] = true
+		}
+	}
+}
+
+// targetActiveLocked reports whether the foreground app is one we should act in.
+func (e *Engine) targetActiveLocked() bool {
+	if len(e.targets) == 0 {
+		return true
+	}
+	name := winput.ForegroundProcessName()
+	return name != "" && e.targets[name]
 }
 
 // SetRules replaces the active rule set. Any running workers are stopped, since
@@ -197,28 +223,50 @@ func (e *Engine) hookProc(nCode, wParam, lParam uintptr) uintptr {
 		return winput.CallNext(nCode, wParam, lParam)
 	}
 
+	// e.pressed[vk] marks a physical press we have consumed (swallowed). Keys are
+	// only consumed in a target app; once consumed, the matching key-up and any OS
+	// auto-repeat are also consumed so the keystroke never leaks to other apps.
 	switch rule.Mode {
 	case config.ModeHold:
-		if down && !e.pressed[vk] {
+		if down {
+			if e.pressed[vk] {
+				return 1 // already firing this hold; swallow auto-repeat
+			}
+			if !e.targetActiveLocked() {
+				return winput.CallNext(nCode, wParam, lParam) // wrong app: key works normally
+			}
 			e.pressed[vk] = true
 			e.startRepeatLocked(rule)
-		} else if up {
+			return 1
+		}
+		if up && e.pressed[vk] {
 			delete(e.pressed, vk)
 			e.stopRepeatLocked(rule.TriggerVK)
+			return 1
 		}
-		return 1
+		return winput.CallNext(nCode, wParam, lParam)
 	case config.ModeToggle:
-		if down && !e.pressed[vk] {
+		if down {
+			if e.pressed[vk] {
+				return 1 // auto-repeat of a press we consumed
+			}
+			// A new press: allowed to stop from anywhere, but only start in a target app.
+			if !e.isRepeatingLocked(rule.TriggerVK) && !e.targetActiveLocked() {
+				return winput.CallNext(nCode, wParam, lParam)
+			}
 			e.pressed[vk] = true
 			if e.isRepeatingLocked(rule.TriggerVK) {
 				e.stopRepeatLocked(rule.TriggerVK)
 			} else {
 				e.startRepeatLocked(rule)
 			}
-		} else if up {
-			delete(e.pressed, vk)
+			return 1
 		}
-		return 1
+		if up && e.pressed[vk] {
+			delete(e.pressed, vk)
+			return 1
+		}
+		return winput.CallNext(nCode, wParam, lParam)
 	}
 	return winput.CallNext(nCode, wParam, lParam)
 }

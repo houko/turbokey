@@ -27,6 +27,8 @@
   "tray.show": "Mostrar ventana",
   "tray.master": "Activar (F8)",
   "tray.exit": "Salir",
+  "lbl.scope": "Apps activas (vacío = todas)",
+  "btn.capture": "Capturar",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "Minimizado a la bandeja. Clic derecho en el icono para salir."
 }

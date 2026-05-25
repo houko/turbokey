@@ -27,6 +27,8 @@
   "tray.show": "Mostra finestra",
   "tray.master": "Attiva (F8)",
   "tray.exit": "Esci",
+  "lbl.scope": "App attive (vuoto = tutte)",
+  "btn.capture": "Cattura",
   "tray.balloon.title": "TurboKey",
   "tray.balloon.body": "Ridotto nella tray. Clic destro sull'icona per uscire."
 }

@@ -41,11 +41,11 @@ func (r *Rule) EffectiveOutputVK() uint16 {
 	return r.OutputVK
 }
 
-// File is the persisted configuration: rules plus an optional UI language code
-// ("" = follow the OS, otherwise "zh" / "en").
+// File is the persisted configuration.
 type File struct {
-	Lang  string
-	Rules []*Rule
+	Lang    string   // UI language code ("" = follow the OS)
+	Targets []string // process exe names the tool acts in (empty = all apps)
+	Rules   []*Rule
 }
 
 // --- JSON serialization (human-readable, keyed by key name) ---
@@ -60,8 +60,9 @@ type ruleDTO struct {
 }
 
 type configDTO struct {
-	Lang  string    `json:"lang,omitempty"`
-	Rules []ruleDTO `json:"rules"`
+	Lang    string    `json:"lang,omitempty"`
+	Targets []string  `json:"targets,omitempty"`
+	Rules   []ruleDTO `json:"rules"`
 }
 
 func path() string {
@@ -115,12 +116,12 @@ func Load() (*File, error) {
 			Enabled:    d.Enabled,
 		})
 	}
-	return &File{Lang: dto.Lang, Rules: rules}, nil
+	return &File{Lang: dto.Lang, Targets: dto.Targets, Rules: rules}, nil
 }
 
 // Save writes the config to config.json next to the executable.
 func Save(f *File) error {
-	dto := configDTO{Lang: f.Lang, Rules: make([]ruleDTO, 0, len(f.Rules))}
+	dto := configDTO{Lang: f.Lang, Targets: f.Targets, Rules: make([]ruleDTO, 0, len(f.Rules))}
 	for _, r := range f.Rules {
 		out := ""
 		if r.OutputVK != 0 {

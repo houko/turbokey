@@ -4,10 +4,13 @@
 package ui
 
 import (
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"sync/atomic"
+	"time"
 
 	"github.com/lxn/walk"
 	. "github.com/lxn/walk/declarative"
@@ -16,6 +19,7 @@ import (
 	"turbokey/internal/engine"
 	"turbokey/internal/i18n"
 	"turbokey/internal/keys"
+	"turbokey/internal/winput"
 )
 
 // ruleModel adapts the rule slice to a walk TableView.
@@ -63,6 +67,8 @@ type mainWindow struct {
 	cbMaster   *walk.CheckBox
 	lblStatus  *walk.Label
 	cbLang     *walk.ComboBox
+	leTargets  *walk.LineEdit
+	btnCapture *walk.PushButton
 	leName     *walk.LineEdit
 	cbTrigger  *walk.ComboBox
 	cbOutput   *walk.ComboBox
@@ -72,8 +78,9 @@ type mainWindow struct {
 	ni         *walk.NotifyIcon // system tray icon; nil if tray setup failed
 	trayMaster *walk.Action     // checkable master toggle in the tray menu
 
-	lang           string // selected language code: "" (auto) | "zh" | "en"
-	langReady      bool   // true once the language combo's initial value is set
+	lang           string   // selected language code: "" (auto) | "zh" | "en"
+	targets        []string // process exe names the tool acts in (empty = all)
+	langReady      bool     // true once the language combo's initial value is set
 	applyingMaster int32  // guard: suppress checkbox handler during programmatic updates
 	exiting        bool   // true once the user chose Exit, so close is not redirected to tray
 	toldTray       bool   // whether the "minimized to tray" balloon was already shown
@@ -88,11 +95,61 @@ func copyRules(in []*config.Rule) []*config.Rule {
 	return out
 }
 
+// save writes the full current configuration to disk.
+func (mw *mainWindow) save() {
+	config.Save(&config.File{Lang: mw.lang, Targets: mw.targets, Rules: mw.model.rules})
+}
+
 // apply pushes the current rules into the engine (as independent copies) and
 // persists them to disk.
 func (mw *mainWindow) apply() {
 	mw.eng.SetRules(copyRules(mw.model.rules))
-	config.Save(&config.File{Lang: mw.lang, Rules: mw.model.rules})
+	mw.save()
+}
+
+func parseTargets(s string) []string {
+	var out []string
+	for _, p := range strings.Split(s, ",") {
+		if p = strings.TrimSpace(p); p != "" {
+			out = append(out, p)
+		}
+	}
+	return out
+}
+
+// applyTargets reads the target field, pushes it to the engine, and persists it.
+func (mw *mainWindow) applyTargets() {
+	mw.targets = parseTargets(mw.leTargets.Text())
+	mw.eng.SetTargets(mw.targets)
+	mw.save()
+}
+
+// onCapture grabs the foreground app after a short countdown (giving the user
+// time to switch to it) and adds its process name to the target list.
+func (mw *mainWindow) onCapture() {
+	go func() {
+		for i := 3; i >= 1; i-- {
+			n := i
+			mw.Synchronize(func() { mw.btnCapture.SetText(fmt.Sprintf("%d…", n)) })
+			time.Sleep(900 * time.Millisecond)
+		}
+		name := winput.ForegroundProcessName()
+		mw.Synchronize(func() {
+			mw.btnCapture.SetText(i18n.T("btn.capture"))
+			if name == "" || strings.EqualFold(name, "turbokey.exe") {
+				return
+			}
+			for _, c := range parseTargets(mw.leTargets.Text()) {
+				if strings.EqualFold(c, name) {
+					return // already listed
+				}
+			}
+			cur := parseTargets(mw.leTargets.Text())
+			cur = append(cur, name)
+			mw.leTargets.SetText(strings.Join(cur, ", "))
+			mw.applyTargets()
+		})
+	}()
 }
 
 func (mw *mainWindow) updateStatus(on bool) {
@@ -189,7 +246,7 @@ func (mw *mainWindow) onLangChanged() {
 		return
 	}
 	mw.lang = code
-	config.Save(&config.File{Lang: mw.lang, Rules: mw.model.rules})
+	mw.save()
 	mw.relaunch()
 }
 
@@ -269,7 +326,7 @@ func (mw *mainWindow) setupTray() {
 // GUI message loop until the window closes.
 func Run(eng *engine.Engine, cfg *config.File) error {
 	model := &ruleModel{rules: cfg.Rules}
-	mw := &mainWindow{eng: eng, model: model, lang: cfg.Lang}
+	mw := &mainWindow{eng: eng, model: model, lang: cfg.Lang, targets: cfg.Targets}
 
 	outputNames := append([]string{i18n.T("output.same")}, keys.Names...)
 
@@ -278,8 +335,8 @@ func Run(eng *engine.Engine, cfg *config.File) error {
 		Title:              i18n.T("app.title"),
 		RightToLeftLayout:  i18n.IsRTL(), // mirror the whole layout for RTL languages
 		RightToLeftReading: i18n.IsRTL(),
-		MinSize:            Size{Width: 400, Height: 340},
-		Size:               Size{Width: 430, Height: 410},
+		MinSize:            Size{Width: 400, Height: 376},
+		Size:               Size{Width: 440, Height: 448},
 		Layout:             VBox{Spacing: 6},
 		Children: []Widget{
 			Composite{
@@ -299,6 +356,14 @@ func Run(eng *engine.Engine, cfg *config.File) error {
 						OnCurrentIndexChanged: mw.onLangChanged,
 						MinSize:               Size{Width: 110},
 					},
+				},
+			},
+			Composite{
+				Layout: HBox{MarginsZero: true, Spacing: 6},
+				Children: []Widget{
+					Label{Text: i18n.T("lbl.scope")},
+					LineEdit{AssignTo: &mw.leTargets, OnEditingFinished: mw.applyTargets},
+					PushButton{AssignTo: &mw.btnCapture, Text: i18n.T("btn.capture"), OnClicked: mw.onCapture, MaxSize: Size{Width: 120}},
 				},
 			},
 			TableView{
@@ -353,6 +418,7 @@ func Run(eng *engine.Engine, cfg *config.File) error {
 	mw.cbMode.SetCurrentIndex(0)
 	mw.cbLang.SetCurrentIndex(i18n.IndexOf(mw.lang))
 	mw.langReady = true // enable the language handler only after the initial value
+	mw.leTargets.SetText(strings.Join(mw.targets, ", "))
 
 	mw.SetIcon(walk.IconApplication())
 
@@ -371,6 +437,7 @@ func Run(eng *engine.Engine, cfg *config.File) error {
 		}
 	})
 
+	eng.SetTargets(cfg.Targets)
 	eng.SetRules(copyRules(cfg.Rules))
 	eng.Start()
 
