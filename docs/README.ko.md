@@ -1,5 +1,12 @@
 # TurboKey
 
+[![Release](https://img.shields.io/github/v/release/houko/turbokey?sort=semver&display_name=tag)](https://github.com/houko/turbokey/releases)
+[![Build](https://github.com/houko/turbokey/actions/workflows/release.yml/badge.svg)](https://github.com/houko/turbokey/actions/workflows/release.yml)
+[![Downloads](https://img.shields.io/github/downloads/houko/turbokey/total)](https://github.com/houko/turbokey/releases)
+[![Go](https://img.shields.io/github/go-mod/go-version/houko/turbokey)](https://github.com/houko/turbokey/blob/main/go.mod)
+[![License: MIT](https://img.shields.io/github/license/houko/turbokey)](https://github.com/houko/turbokey/blob/main/LICENSE)
+![Platform](https://img.shields.io/badge/platform-Windows-0078D6?logo=windows&logoColor=white)
+
 [English](../README.md) · [简体中文](README.zh.md) · [繁體中文](README.zh-Hant.md) · [日本語](README.ja.md) · **한국어** · [Español](README.es.md) · [Français](README.fr.md) · [Deutsch](README.de.md) · [Русский](README.ru.md) · [Português](README.pt.md) · [Italiano](README.it.md) · [العربية](README.ar.md) · [עברית](README.he.md)
 
 네이티브 GUI를 갖춘 가벼운 Windows 키 연타(rapid-fire / turbo) 도구입니다. 키 하나를 자동 반복으로 바인딩할 수 있습니다(같은 키 또는 다른 키). "누르고 있는 동안" 또는 "토글" 두 가지 모드를 지원하며, 규칙마다 간격을 따로 설정합니다.
