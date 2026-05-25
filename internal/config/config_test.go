@@ -57,6 +57,34 @@ func TestBOMTolerated(t *testing.T) {
 	}
 }
 
+func TestLoadDefaultsAndSkips(t *testing.T) {
+	p := filepath.Join(t.TempDir(), "config.json")
+	body := `{"rules":[
+		{"name":"bad","trigger":"NoSuchKey","mode":"hold","interval":5,"enabled":true},
+		{"name":"ok","trigger":"J","output":"","mode":"weird","interval":0,"enabled":true}
+	]}`
+	if err := os.WriteFile(p, []byte(body), 0644); err != nil {
+		t.Fatal(err)
+	}
+	out, err := loadFrom(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(out.Rules) != 1 {
+		t.Fatalf("unknown trigger key should be skipped, got %d rules", len(out.Rules))
+	}
+	r := out.Rules[0]
+	if r.Mode != ModeHold {
+		t.Error("unknown mode should default to hold")
+	}
+	if r.IntervalMs != 10 {
+		t.Errorf("interval < 1 should default to 10, got %d", r.IntervalMs)
+	}
+	if r.OutputVK != 0 {
+		t.Error(`empty "output" should mean OutputVK 0 (same as trigger)`)
+	}
+}
+
 func TestMissingFileIsEmpty(t *testing.T) {
 	out, err := loadFrom(filepath.Join(t.TempDir(), "absent.json"))
 	if err != nil {

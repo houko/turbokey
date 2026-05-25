@@ -34,6 +34,34 @@ func TestTFallback(t *testing.T) {
 	}
 }
 
+func TestInitPrecedence(t *testing.T) {
+	t.Setenv("TURBOKEY_LANG", "")
+	Init("zh")
+	if Current() != "zh" {
+		t.Errorf("saved pref should win, got %s", Current())
+	}
+	Init("en")
+	if Current() != EN {
+		t.Errorf("saved pref should win, got %s", Current())
+	}
+	t.Setenv("TURBOKEY_LANG", "ja")
+	Init("en")
+	if Current() != "ja" {
+		t.Errorf("env should override pref, got %s", Current())
+	}
+}
+
+func TestIndexCodeRoundTrip(t *testing.T) {
+	for i := range langs {
+		if got := IndexOf(CodeAt(i)); got != i {
+			t.Errorf("IndexOf(CodeAt(%d)) = %d", i, got)
+		}
+	}
+	if len(DisplayNames()) != len(langs) {
+		t.Errorf("DisplayNames len = %d, want %d", len(DisplayNames()), len(langs))
+	}
+}
+
 func TestRegistryHasCatalogs(t *testing.T) {
 	for _, l := range langs {
 		if l.code == "" {

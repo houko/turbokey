@@ -36,6 +36,20 @@ type Engine struct {
 	// OnMasterChange is invoked when the master switch flips via the global
 	// hotkey, so the UI can reflect the new state. May be nil.
 	OnMasterChange func(bool)
+
+	// output sends one key/mouse event; foreground returns the foreground exe.
+	// Both are injectable so the dispatch logic can be unit-tested without syscalls.
+	output     func(vk uint16, up bool)
+	foreground func() string
+}
+
+// defaultOutput injects a real key or mouse event for the given virtual-key code.
+func defaultOutput(vk uint16, up bool) {
+	if keys.IsMouse(vk) {
+		winput.SendMouseEvent(vk, up)
+		return
+	}
+	winput.SendKeyEvent(winput.ScanCode(vk), keys.IsExtended(vk), up)
 }
 
 // New creates an engine whose master switch is toggled by masterHotkeyVK.
@@ -46,6 +60,8 @@ func New(masterHotkeyVK uint16) *Engine {
 		targets:        map[string]bool{},
 		pressed:        map[uint16]bool{},
 		workers:        map[uint16]chan struct{}{},
+		output:         defaultOutput,
+		foreground:     winput.ForegroundProcessName,
 	}
 }
 
@@ -67,7 +83,7 @@ func (e *Engine) targetActiveLocked() bool {
 	if len(e.targets) == 0 {
 		return true
 	}
-	name := winput.ForegroundProcessName()
+	name := e.foreground()
 	return name != "" && e.targets[name]
 }
 
@@ -121,16 +137,9 @@ func (e *Engine) startRepeatLocked(r *config.Rule) {
 		interval = 1
 	}
 	out := r.EffectiveOutputVK()
-	var down, up func()
-	if keys.IsMouse(out) {
-		down = func() { winput.SendMouseEvent(out, false) }
-		up = func() { winput.SendMouseEvent(out, true) }
-	} else {
-		sc := winput.ScanCode(out)
-		ext := keys.IsExtended(out)
-		down = func() { winput.SendKeyEvent(sc, ext, false) }
-		up = func() { winput.SendKeyEvent(sc, ext, true) }
-	}
+	output := e.output
+	down := func() { output(out, false) }
+	up := func() { output(out, true) }
 	stop := make(chan struct{})
 	e.workers[r.TriggerVK] = stop
 	go repeatWorker(down, up, interval, stop)

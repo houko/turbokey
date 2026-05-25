@@ -20,6 +20,12 @@ func TestVKNameIndexRoundTrip(t *testing.T) {
 	}
 }
 
+func TestNameUnknown(t *testing.T) {
+	if got := Name(0xABCD); got != "0xABCD" {
+		t.Errorf("Name(unknown) = %q, want 0xABCD", got)
+	}
+}
+
 func TestIsMouse(t *testing.T) {
 	if !IsMouse(VKMouseLeft) {
 		t.Error("VKMouseLeft should be a mouse button")
