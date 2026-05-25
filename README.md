@@ -56,9 +56,20 @@ DPI awareness, requireAdministrator), then runs `go build`. To build by hand:
 
 ```sh
 go install github.com/akavel/rsrc@latest
-rsrc -manifest app.manifest -arch amd64 -o rsrc_windows_amd64.syso
+rsrc -manifest cmd/turbokey/app.manifest -arch amd64 -o cmd/turbokey/rsrc_windows_amd64.syso
 GOOS=windows GOARCH=amd64 CGO_ENABLED=0 \
-  go build -trimpath -ldflags "-H windowsgui -s -w" -o turbokey.exe .
+  go build -trimpath -ldflags "-H windowsgui -s -w" -o turbokey.exe ./cmd/turbokey
+```
+
+## Project layout
+
+```
+cmd/turbokey/      entry point (main) + Windows application manifest
+internal/keys/     key table; display-name <-> virtual-key-code mapping
+internal/config/   rule model and config.json load/save
+internal/winput/   Win32 wrappers: low-level keyboard hook + SendInput
+internal/engine/   rapid-fire engine: hook callback, master switch, workers
+internal/ui/       native Win32 GUI (lxn/walk)
 ```
 
 ## Usage

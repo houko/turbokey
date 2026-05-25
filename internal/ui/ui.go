@@ -1,18 +1,23 @@
 //go:build windows
 
-package main
+// Package ui implements the native Win32 GUI (lxn/walk) for managing rules.
+package ui
 
 import (
 	"sync/atomic"
 
 	"github.com/lxn/walk"
 	. "github.com/lxn/walk/declarative"
+
+	"turbokey/internal/config"
+	"turbokey/internal/engine"
+	"turbokey/internal/keys"
 )
 
 // ruleModel adapts the rule slice to a walk TableView.
 type ruleModel struct {
 	walk.TableModelBase
-	rules []*Rule
+	rules []*config.Rule
 }
 
 func (m *ruleModel) RowCount() int { return len(m.rules) }
@@ -23,14 +28,14 @@ func (m *ruleModel) Value(row, col int) interface{} {
 	case 0:
 		return r.Name
 	case 1:
-		return vkName(r.TriggerVK)
+		return keys.Name(r.TriggerVK)
 	case 2:
 		if r.OutputVK == 0 {
 			return "(同触发键)"
 		}
-		return vkName(r.OutputVK)
+		return keys.Name(r.OutputVK)
 	case 3:
-		if r.Mode == ModeToggle {
+		if r.Mode == config.ModeToggle {
 			return "开关"
 		}
 		return "按住"
@@ -47,8 +52,8 @@ func (m *ruleModel) Value(row, col int) interface{} {
 
 type mainWindow struct {
 	*walk.MainWindow
-	engine *Engine
-	model  *ruleModel
+	eng   *engine.Engine
+	model *ruleModel
 
 	tv         *walk.TableView
 	cbMaster   *walk.CheckBox
@@ -62,8 +67,8 @@ type mainWindow struct {
 	applyingMaster int32 // guard: suppress checkbox handler during programmatic updates
 }
 
-func copyRules(in []*Rule) []*Rule {
-	out := make([]*Rule, len(in))
+func copyRules(in []*config.Rule) []*config.Rule {
+	out := make([]*config.Rule, len(in))
 	for i, r := range in {
 		rc := *r
 		out[i] = &rc
@@ -74,8 +79,8 @@ func copyRules(in []*Rule) []*Rule {
 // apply pushes the current rules into the engine (as independent copies) and
 // persists them to disk.
 func (mw *mainWindow) apply() {
-	mw.engine.SetRules(copyRules(mw.model.rules))
-	saveRules(mw.model.rules)
+	mw.eng.SetRules(copyRules(mw.model.rules))
+	config.Save(mw.model.rules)
 }
 
 func (mw *mainWindow) updateStatus(on bool) {
@@ -91,28 +96,28 @@ func (mw *mainWindow) onMasterToggled() {
 		return
 	}
 	on := mw.cbMaster.Checked()
-	mw.engine.SetMaster(on)
+	mw.eng.SetMaster(on)
 	mw.updateStatus(on)
 }
 
 func (mw *mainWindow) onAdd() {
-	tvk, ok := nameToVK[mw.cbTrigger.Text()]
+	tvk, ok := keys.VK(mw.cbTrigger.Text())
 	if !ok {
 		return
 	}
 	var ovk uint16
 	if mw.cbOutput.CurrentIndex() > 0 {
-		ovk = nameToVK[mw.cbOutput.Text()]
+		ovk, _ = keys.VK(mw.cbOutput.Text())
 	}
-	mode := ModeHold
+	mode := config.ModeHold
 	if mw.cbMode.CurrentIndex() == 1 {
-		mode = ModeToggle
+		mode = config.ModeToggle
 	}
 	interval := int(mw.neInterval.Value())
 	if interval < 1 {
 		interval = 1
 	}
-	mw.model.rules = append(mw.model.rules, &Rule{
+	mw.model.rules = append(mw.model.rules, &config.Rule{
 		Name:       mw.leName.Text(),
 		TriggerVK:  tvk,
 		OutputVK:   ovk,
@@ -144,11 +149,13 @@ func (mw *mainWindow) onToggleEnabled() {
 	mw.apply()
 }
 
-func runUI(engine *Engine, initialRules []*Rule) error {
+// Run builds the window, wires it to the engine, starts the hook, and runs the
+// GUI message loop until the window closes.
+func Run(eng *engine.Engine, initialRules []*config.Rule) error {
 	model := &ruleModel{rules: initialRules}
-	mw := &mainWindow{engine: engine, model: model}
+	mw := &mainWindow{eng: eng, model: model}
 
-	outputNames := append([]string{"(同触发键)"}, keyNames...)
+	outputNames := append([]string{"(同触发键)"}, keys.Names...)
 
 	if err := (MainWindow{
 		AssignTo: &mw.MainWindow,
@@ -188,7 +195,7 @@ func runUI(engine *Engine, initialRules []*Rule) error {
 					Label{Text: "名称"},
 					LineEdit{AssignTo: &mw.leName, MaxLength: 20, MinSize: Size{Width: 100}},
 					Label{Text: "触发键"},
-					ComboBox{AssignTo: &mw.cbTrigger, Model: keyNames, MinSize: Size{Width: 70}},
+					ComboBox{AssignTo: &mw.cbTrigger, Model: keys.Names, MinSize: Size{Width: 70}},
 					Label{Text: "输出键"},
 					ComboBox{AssignTo: &mw.cbOutput, Model: outputNames, MinSize: Size{Width: 100}},
 					Label{Text: "模式"},
@@ -211,16 +218,16 @@ func runUI(engine *Engine, initialRules []*Rule) error {
 		return err
 	}
 
-	// Initialize widget values after creation: walk's declarative builder
-	// applies properties in random (map) order, so range-checked properties
-	// like NumberEdit.Value or ComboBox.CurrentIndex must be set here instead.
+	// Initialize widget values after creation: walk's declarative builder applies
+	// properties in random (map) order, so range-checked properties like
+	// NumberEdit.Value or ComboBox.CurrentIndex must be set here instead.
 	mw.neInterval.SetRange(1, 100000)
 	mw.neInterval.SetValue(10)
 	mw.cbTrigger.SetCurrentIndex(0)
 	mw.cbOutput.SetCurrentIndex(0)
 	mw.cbMode.SetCurrentIndex(0)
 
-	engine.onMasterChange = func(on bool) {
+	eng.OnMasterChange = func(on bool) {
 		mw.Synchronize(func() {
 			atomic.StoreInt32(&mw.applyingMaster, 1)
 			mw.cbMaster.SetChecked(on)
@@ -229,8 +236,8 @@ func runUI(engine *Engine, initialRules []*Rule) error {
 		})
 	}
 
-	engine.SetRules(copyRules(initialRules))
-	engine.Start()
+	eng.SetRules(copyRules(initialRules))
+	eng.Start()
 
 	mw.Run()
 	return nil

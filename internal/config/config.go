@@ -1,11 +1,14 @@
 //go:build windows
 
-package main
+// Package config defines the rapid-fire rule model and its JSON persistence.
+package config
 
 import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+
+	"turbokey/internal/keys"
 )
 
 // Mode is the rapid-fire trigger style for a rule.
@@ -28,7 +31,9 @@ type Rule struct {
 	Enabled    bool
 }
 
-func (r *Rule) effectiveOutputVK() uint16 {
+// EffectiveOutputVK returns the key actually sent: the trigger key itself when no
+// distinct output key is configured.
+func (r *Rule) EffectiveOutputVK() uint16 {
 	if r.OutputVK == 0 {
 		return r.TriggerVK
 	}
@@ -50,7 +55,7 @@ type configDTO struct {
 	Rules []ruleDTO `json:"rules"`
 }
 
-func configPath() string {
+func path() string {
 	exe, err := os.Executable()
 	if err != nil {
 		return "config.json"
@@ -58,10 +63,10 @@ func configPath() string {
 	return filepath.Join(filepath.Dir(exe), "config.json")
 }
 
-// loadRules reads rules from config.json next to the executable.
-// A missing file yields an empty slice, not an error.
-func loadRules() ([]*Rule, error) {
-	data, err := os.ReadFile(configPath())
+// Load reads rules from config.json next to the executable. A missing file
+// yields an empty slice, not an error.
+func Load() ([]*Rule, error) {
+	data, err := os.ReadFile(path())
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, nil
@@ -74,13 +79,13 @@ func loadRules() ([]*Rule, error) {
 	}
 	rules := make([]*Rule, 0, len(dto.Rules))
 	for _, d := range dto.Rules {
-		tvk, ok := nameToVK[d.Trigger]
+		tvk, ok := keys.VK(d.Trigger)
 		if !ok {
 			continue // unknown key name, skip defensively
 		}
 		var ovk uint16
 		if d.Output != "" {
-			ovk = nameToVK[d.Output]
+			ovk, _ = keys.VK(d.Output)
 		}
 		mode := ModeHold
 		if d.Mode == "toggle" {
@@ -102,13 +107,13 @@ func loadRules() ([]*Rule, error) {
 	return rules, nil
 }
 
-// saveRules writes rules to config.json next to the executable.
-func saveRules(rules []*Rule) error {
+// Save writes rules to config.json next to the executable.
+func Save(rules []*Rule) error {
 	dto := configDTO{Rules: make([]ruleDTO, 0, len(rules))}
 	for _, r := range rules {
 		out := ""
 		if r.OutputVK != 0 {
-			out = vkName(r.OutputVK)
+			out = keys.Name(r.OutputVK)
 		}
 		mode := "hold"
 		if r.Mode == ModeToggle {
@@ -116,7 +121,7 @@ func saveRules(rules []*Rule) error {
 		}
 		dto.Rules = append(dto.Rules, ruleDTO{
 			Name:     r.Name,
-			Trigger:  vkName(r.TriggerVK),
+			Trigger:  keys.Name(r.TriggerVK),
 			Output:   out,
 			Mode:     mode,
 			Interval: r.IntervalMs,
@@ -127,5 +132,5 @@ func saveRules(rules []*Rule) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(configPath(), data, 0644)
+	return os.WriteFile(path(), data, 0644)
 }

@@ -10,11 +10,11 @@ cd "$(dirname "$0")"
 # Module init (idempotent).
 [ -f go.mod ] || go mod init turbokey
 
-# Embed the application manifest as a Windows resource object.
-# rsrc is a host-native tool, so it must build/run for the host platform.
-if [ ! -f rsrc_windows_amd64.syso ]; then
+# Embed the application manifest as a Windows resource object, placed in the
+# main package directory so the linker picks it up. rsrc is a host-native tool.
+if [ ! -f cmd/turbokey/rsrc_windows_amd64.syso ]; then
   go install github.com/akavel/rsrc@latest
-  rsrc -manifest app.manifest -arch amd64 -o rsrc_windows_amd64.syso
+  rsrc -manifest cmd/turbokey/app.manifest -arch amd64 -o cmd/turbokey/rsrc_windows_amd64.syso
 fi
 
 # Resolve dependencies as seen by the Windows build.
@@ -22,7 +22,7 @@ GOOS=windows GOARCH=amd64 go mod tidy
 
 # Build the GUI exe (-H windowsgui hides the console window).
 GOOS=windows GOARCH=amd64 CGO_ENABLED=0 \
-  go build -trimpath -ldflags "-H windowsgui -s -w" -o turbokey.exe .
+  go build -trimpath -ldflags "-H windowsgui -s -w" -o turbokey.exe ./cmd/turbokey
 
 echo "--- built ---"
 ls -lh turbokey.exe
