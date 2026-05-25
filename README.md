@@ -23,7 +23,8 @@ is held briefly so poll-based games reliably sample it.
   running). Left-click the tray icon to restore it; right-click for a menu to
   show the window, toggle the master switch, or quit.
 - Rules are saved to `config.json` next to the executable and reloaded on start.
-- Localized UI in 11 languages, auto-detected from the OS, with an in-app picker.
+- Localized UI in 13 languages (incl. right-to-left Arabic & Hebrew with a fully
+  mirrored layout), auto-detected from the OS, with an in-app picker.
 - The tool filters out its own synthetic input, so it never re-triggers itself.
 
 ## How it works
@@ -120,7 +121,10 @@ saved to `config.json` and the app relaunches to apply it; "Auto" follows the
 Windows UI language.
 
 Bundled languages: English, 简体中文, 繁體中文, 日本語, 한국어, Español, Français,
-Deutsch, Русский, Português, Italiano.
+Deutsch, Русский, Português, Italiano, العربية, עברית.
+
+Right-to-left languages (Arabic, Hebrew) mirror the entire window layout via
+`WS_EX_LAYOUTRTL` (walk's `RightToLeftLayout`).
 
 Resolution order: the `TURBOKEY_LANG` environment variable (`zh`/`en`), then the
 saved choice, then the OS language.

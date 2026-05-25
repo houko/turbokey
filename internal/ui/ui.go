@@ -274,11 +274,13 @@ func Run(eng *engine.Engine, cfg *config.File) error {
 	outputNames := append([]string{i18n.T("output.same")}, keys.Names...)
 
 	if err := (MainWindow{
-		AssignTo: &mw.MainWindow,
-		Title:    i18n.T("app.title"),
-		MinSize:  Size{Width: 400, Height: 340},
-		Size:     Size{Width: 430, Height: 410},
-		Layout:   VBox{Spacing: 6},
+		AssignTo:           &mw.MainWindow,
+		Title:              i18n.T("app.title"),
+		RightToLeftLayout:  i18n.IsRTL(), // mirror the whole layout for RTL languages
+		RightToLeftReading: i18n.IsRTL(),
+		MinSize:            Size{Width: 400, Height: 340},
+		Size:               Size{Width: 430, Height: 410},
+		Layout:             VBox{Spacing: 6},
 		Children: []Widget{
 			Composite{
 				Layout: HBox{MarginsZero: true},

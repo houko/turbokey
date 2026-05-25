@@ -41,7 +41,15 @@ var langs = []langEntry{
 	{"ru", "Русский"},
 	{"pt", "Português"},
 	{"it", "Italiano"},
+	{"ar", "العربية"},
+	{"he", "עברית"},
 }
+
+// rtl marks right-to-left languages, whose whole UI layout must be mirrored.
+var rtl = map[Lang]bool{"ar": true, "he": true}
+
+// IsRTL reports whether the active language is written right-to-left.
+func IsRTL() bool { return rtl[current] }
 
 //go:embed locales/*.json
 var localesFS embed.FS
@@ -164,6 +172,10 @@ func detectOS() Lang {
 		return "pt"
 	case 0x10:
 		return "it"
+	case 0x01:
+		return "ar"
+	case 0x0d:
+		return "he"
 	default:
 		return EN
 	}
