@@ -108,6 +108,7 @@ Note:
 
 - `output: ""` significa "uguale al tasto di attivazione".
 - `mode`: `"hold"` o `"toggle"`.
+- `modifiers` (facoltativo): tasti modificatori da tenere premuti con il tasto di attivazione, ad es. `["Ctrl"]`: `Ctrl+E` si ripete mentre `E` da solo digita normalmente.
 - Nomi dei tasti: `A`–`Z`, `0`–`9`, `F1`–`F12`, `Space`, `Enter`, `Esc`, `Tab`, `↑ ↓ ← →`, `Ctrl`, `Alt`, `Shift`, e pulsanti del mouse `Mouse Left`, `Mouse Right`, `Mouse Mid`, `Mouse X1`, `Mouse X2`. (Sono identificatori neutri rispetto alla lingua e non vengono tradotti, quindi la configurazione resta valida tra le lingue dell'UI.)
 
 ## Limitare ad app specifiche

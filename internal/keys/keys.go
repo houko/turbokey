@@ -32,6 +32,9 @@ const (
 	VKMouseX2     = 0x06
 )
 
+// VKLWin is the left Windows key. It is not a selectable key; it is only injected as the Win modifier of a rule, and it is an extended key.
+const VKLWin = 0x5B
+
 var (
 	defs       []keyDef
 	nameToVK   = map[string]uint16{}
@@ -86,6 +89,7 @@ func init() {
 			KeyboardNames = append(KeyboardNames, k.name)
 		}
 	}
+	vkExtended[VKLWin] = true
 }
 
 // VK returns the virtual-key code for a display name.

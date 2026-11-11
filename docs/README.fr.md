@@ -108,6 +108,7 @@ Remarques :
 
 - `output: ""` signifie « identique à la touche de déclenchement ».
 - `mode` : `"hold"` ou `"toggle"`.
+- `modifiers` (facultatif) : touches de modification à maintenir avec la touche de déclenchement, p. ex. `["Ctrl"]` : `Ctrl+E` se répète tandis que `E` seule tape normalement.
 - Noms de touches : `A`–`Z`, `0`–`9`, `F1`–`F12`, `Space`, `Enter`, `Esc`, `Tab`, `↑ ↓ ← →`, `Ctrl`, `Alt`, `Shift`, et boutons de souris `Mouse Left`, `Mouse Right`, `Mouse Mid`, `Mouse X1`, `Mouse X2`. (Ce sont des identifiants neutres et non traduits, donc la configuration reste valide d'une langue d'UI à l'autre.)
 
 ## Limiter à des apps précises

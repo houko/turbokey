@@ -7,6 +7,7 @@ package engine
 import (
 	"strings"
 	"sync"
+	"sync/atomic"
 	"time"
 	"unsafe"
 
@@ -26,12 +27,17 @@ type Engine struct {
 	started        bool
 
 	rules     []*config.Rule
-	byTrigger map[uint16]*config.Rule
+	byTrigger map[uint16][]*config.Rule // rules by trigger VK; several may share a key with different modifiers
 
 	targets map[string]bool // lowercase exe names the tool acts in (empty = all apps)
 
-	pressed map[uint16]bool          // trigger keys we currently own (consumed the press)
-	workers map[uint16]chan struct{} // active repeat workers, keyed by trigger VK
+	pressed map[uint16]bool                // trigger keys we currently own (consumed the press)
+	engaged map[uint16]*config.Rule        // the rule each consumed press started or stopped
+	workers map[*config.Rule]chan struct{} // active repeat workers, keyed by rule
+
+	// modKeys holds the modifier keys physically held (left and right apart, as the hook reports them); held is the set they make, read by the repeat workers without the lock. Our own injected events never reach dispatch, so this is always the user's real state.
+	modKeys map[uint16]bool
+	held    atomic.Uint32
 
 	// OnMasterChange is invoked when the master switch flips via the global
 	// hotkey, so the UI can reflect the new state. May be nil.
@@ -56,10 +62,12 @@ func defaultOutput(vk uint16, up bool) {
 func New(masterHotkeyVK uint16) *Engine {
 	return &Engine{
 		masterHotkeyVK: masterHotkeyVK,
-		byTrigger:      map[uint16]*config.Rule{},
+		byTrigger:      map[uint16][]*config.Rule{},
 		targets:        map[string]bool{},
 		pressed:        map[uint16]bool{},
-		workers:        map[uint16]chan struct{}{},
+		engaged:        map[uint16]*config.Rule{},
+		workers:        map[*config.Rule]chan struct{}{},
+		modKeys:        map[uint16]bool{},
 		output:         defaultOutput,
 		foreground:     winput.ForegroundProcessName,
 	}
@@ -94,10 +102,66 @@ func (e *Engine) SetRules(rules []*config.Rule) {
 	defer e.mu.Unlock()
 	e.stopAllLocked() // also clears e.pressed
 	e.rules = rules
-	e.byTrigger = make(map[uint16]*config.Rule, len(rules))
+	e.byTrigger = make(map[uint16][]*config.Rule, len(rules))
 	for _, r := range rules {
-		e.byTrigger[r.TriggerVK] = r
+		e.byTrigger[r.TriggerVK] = append(e.byTrigger[r.TriggerVK], r)
 	}
+}
+
+// modOf maps a modifier key, generic or left/right-specific, to its modifier; 0 for any other key.
+func modOf(vk uint16) config.Mods {
+	switch vk {
+	case 0x11, 0xA2, 0xA3: // VK_CONTROL, VK_LCONTROL, VK_RCONTROL
+		return config.ModCtrl
+	case 0x10, 0xA0, 0xA1: // VK_SHIFT, VK_LSHIFT, VK_RSHIFT
+		return config.ModShift
+	case 0x12, 0xA4, 0xA5: // VK_MENU, VK_LMENU, VK_RMENU
+		return config.ModAlt
+	case 0x5B, 0x5C: // VK_LWIN, VK_RWIN
+		return config.ModWin
+	}
+	return 0
+}
+
+// modVK is the key injected for a modifier a rule needs but the user is not holding.
+var modVK = map[config.Mods]uint16{config.ModCtrl: 0x11, config.ModShift: 0x10, config.ModAlt: 0x12, config.ModWin: keys.VKLWin}
+
+// trackModLocked records a modifier key going down or up.
+func (e *Engine) trackModLocked(vk uint16, down, up bool) {
+	if modOf(vk) == 0 {
+		return
+	}
+	if down {
+		e.modKeys[vk] = true
+	} else if up {
+		delete(e.modKeys, vk)
+	}
+	var m config.Mods
+	for k := range e.modKeys {
+		m |= modOf(k)
+	}
+	e.held.Store(uint32(m))
+}
+
+func (e *Engine) heldMods() config.Mods { return config.Mods(e.held.Load()) }
+
+// ruleForLocked picks the enabled rule a press of vk fires with the modifiers held now: one whose modifiers are exactly those held, else one without modifiers, else none.
+func (e *Engine) ruleForLocked(vk uint16) *config.Rule {
+	held := e.heldMods()
+	var plain *config.Rule
+	for _, r := range e.byTrigger[vk] {
+		if !r.Enabled {
+			continue
+		}
+		if r.Modifiers == 0 {
+			if plain == nil {
+				plain = r
+			}
+		} else if r.Modifiers == held {
+			return r
+		}
+	}
+	return plain
 }
 
 // SetMasterHotkey changes the hotkey used to toggle the master switch.
@@ -136,10 +200,11 @@ func (e *Engine) stopAllLocked() {
 	// stays "pressed" forever once its worker is stopped (e.g. master turned off
 	// mid-press), and the next real keydown is misread as an auto-repeat.
 	e.pressed = map[uint16]bool{}
+	e.engaged = map[uint16]*config.Rule{}
 }
 
 func (e *Engine) startRepeatLocked(r *config.Rule) {
-	if _, running := e.workers[r.TriggerVK]; running {
+	if _, running := e.workers[r]; running {
 		return
 	}
 	interval := r.IntervalMs
@@ -148,22 +213,40 @@ func (e *Engine) startRepeatLocked(r *config.Rule) {
 	}
 	out := r.EffectiveOutputVK()
 	output := e.output
-	down := func() { output(out, false) }
-	up := func() { output(out, true) }
+	need := r.Modifiers
+	// Each pulse is sent as the rule's combination: a modifier the rule needs but the user is not holding (in toggle mode they may have let go) is pressed around the key and released after it, in reverse order; one the user holds is left alone.
+	var added []config.Mods
+	down := func() {
+		added = added[:0]
+		missing := need &^ e.heldMods()
+		for _, m := range []config.Mods{config.ModCtrl, config.ModShift, config.ModAlt, config.ModWin} {
+			if missing&m != 0 {
+				output(modVK[m], false)
+				added = append(added, m)
+			}
+		}
+		output(out, false)
+	}
+	up := func() {
+		output(out, true)
+		for i := len(added) - 1; i >= 0; i-- {
+			output(modVK[added[i]], true)
+		}
+	}
 	stop := make(chan struct{})
-	e.workers[r.TriggerVK] = stop
+	e.workers[r] = stop
 	go repeatWorker(down, up, interval, stop)
 }
 
-func (e *Engine) stopRepeatLocked(triggerVK uint16) {
-	if stop, ok := e.workers[triggerVK]; ok {
+func (e *Engine) stopRepeatLocked(r *config.Rule) {
+	if stop, ok := e.workers[r]; ok {
 		close(stop)
-		delete(e.workers, triggerVK)
+		delete(e.workers, r)
 	}
 }
 
-func (e *Engine) isRepeatingLocked(triggerVK uint16) bool {
-	_, ok := e.workers[triggerVK]
+func (e *Engine) isRepeatingLocked(r *config.Rule) bool {
+	_, ok := e.workers[r]
 	return ok
 }
 
@@ -281,6 +364,9 @@ func (e *Engine) dispatch(vk uint16, down, up bool) bool {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
+	// Modifier state is tracked whatever the master switch says, so it is right the moment it is turned on.
+	e.trackModLocked(vk, down, up)
+
 	// Master hotkey works regardless of master state.
 	if vk == e.masterHotkeyVK {
 		if down && !e.pressed[vk] {
@@ -296,52 +382,49 @@ func (e *Engine) dispatch(vk uint16, down, up bool) bool {
 		return false
 	}
 
-	rule, ok := e.byTrigger[vk]
-	if !ok || !rule.Enabled {
+	// The release, and any auto-repeat, of a press we consumed is ours whatever the modifiers are by then: the rule chosen at the press is the one engaged.
+	if e.pressed[vk] {
+		if up {
+			delete(e.pressed, vk)
+			if r := e.engaged[vk]; r != nil && r.Mode == config.ModeHold {
+				e.stopRepeatLocked(r)
+			}
+			delete(e.engaged, vk)
+		}
+		return true
+	}
+	if !down {
+		return false
+	}
+
+	rule := e.ruleForLocked(vk)
+	if rule == nil {
 		return false
 	}
 
 	switch rule.Mode {
 	case config.ModeHold:
-		if down {
-			if e.pressed[vk] {
-				return true // already firing this hold; swallow auto-repeat
-			}
-			if !e.targetActiveLocked() {
-				return false // wrong app: input works normally
-			}
-			e.pressed[vk] = true
-			e.startRepeatLocked(rule)
-			return true
+		if !e.targetActiveLocked() {
+			return false // wrong app: input works normally
 		}
-		if up && e.pressed[vk] {
-			delete(e.pressed, vk)
-			e.stopRepeatLocked(rule.TriggerVK)
-			return true
-		}
-		return false
+		e.pressed[vk] = true
+		e.engaged[vk] = rule
+		e.startRepeatLocked(rule)
+		return true
 	case config.ModeToggle:
-		if down {
-			if e.pressed[vk] {
-				return true // auto-repeat of a press we consumed
-			}
-			// New press: stop from anywhere, but only start in a target app.
-			if !e.isRepeatingLocked(rule.TriggerVK) && !e.targetActiveLocked() {
-				return false
-			}
-			e.pressed[vk] = true
-			if e.isRepeatingLocked(rule.TriggerVK) {
-				e.stopRepeatLocked(rule.TriggerVK)
-			} else {
-				e.startRepeatLocked(rule)
-			}
-			return true
+		// New press: stop from anywhere, but only start in a target app.
+		running := e.isRepeatingLocked(rule)
+		if !running && !e.targetActiveLocked() {
+			return false
 		}
-		if up && e.pressed[vk] {
-			delete(e.pressed, vk)
-			return true
+		e.pressed[vk] = true
+		e.engaged[vk] = rule
+		if running {
+			e.stopRepeatLocked(rule)
+		} else {
+			e.startRepeatLocked(rule)
 		}
-		return false
+		return true
 	}
 	return false
 }

@@ -3,8 +3,11 @@
 package engine
 
 import (
+	"fmt"
+	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"turbokey/internal/config"
 )
@@ -183,5 +186,190 @@ func TestDisabledAndUnknownPassThrough(t *testing.T) {
 	}
 	if active(e) != 0 {
 		t.Error("no workers expected")
+	}
+}
+
+// recOut records every injected event in order, for checking how a combination is sent.
+type recOut struct {
+	mu     sync.Mutex
+	events []string
+	first  chan struct{} // closed after the first key-up of the output, i.e. one full pulse
+	outVK  uint16
+	once   sync.Once
+}
+
+func (r *recOut) fire(vk uint16, up bool) {
+	r.mu.Lock()
+	dir := "down"
+	if up {
+		dir = "up"
+	}
+	r.events = append(r.events, fmt.Sprintf("%X %s", vk, dir))
+	r.mu.Unlock()
+	if up && vk == r.outVK {
+		r.once.Do(func() { close(r.first) })
+	}
+}
+
+func (r *recOut) snapshot() []string {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	return append([]string(nil), r.events...)
+}
+
+func modRule(vk uint16, mods config.Mods, mode config.Mode) *config.Rule {
+	return &config.Rule{TriggerVK: vk, Modifiers: mods, Mode: mode, IntervalMs: 1000, Enabled: true}
+}
+
+const (
+	vkE     = 0x45
+	vkLCtrl = 0xA2
+	vkLShft = 0xA0
+	vkRCtrl = 0xA3
+)
+
+// The issue's case: with only a Ctrl+E rule, E alone types normally and Ctrl+E fires.
+func TestModifierRuleNeedsItsModifiers(t *testing.T) {
+	e, _, _ := newTest(t)
+	e.SetMaster(true)
+	e.SetRules([]*config.Rule{modRule(vkE, config.ModCtrl, config.ModeHold)})
+
+	if e.dispatch(vkE, true, false) {
+		t.Fatal("E without Ctrl should pass through")
+	}
+	e.dispatch(vkE, false, true)
+	if active(e) != 0 {
+		t.Fatal("E without Ctrl should not start a worker")
+	}
+
+	if e.dispatch(vkLCtrl, true, false) {
+		t.Fatal("the modifier itself must never be swallowed")
+	}
+	if !e.dispatch(vkE, true, false) {
+		t.Fatal("Ctrl+E should be swallowed")
+	}
+	if active(e) != 1 {
+		t.Fatal("Ctrl+E should start the worker")
+	}
+	e.dispatch(vkLCtrl, false, true) // letting go of Ctrl first still ends the hold on E's release
+	if !e.dispatch(vkE, false, true) {
+		t.Fatal("the release of a consumed press should be swallowed")
+	}
+	if active(e) != 0 {
+		t.Fatal("releasing E should stop the worker")
+	}
+}
+
+// The modifiers must match exactly: Ctrl+Shift+E is not Ctrl+E, and right Ctrl counts as Ctrl.
+func TestModifiersMatchExactly(t *testing.T) {
+	e, _, _ := newTest(t)
+	e.SetMaster(true)
+	e.SetRules([]*config.Rule{modRule(vkE, config.ModCtrl, config.ModeHold)})
+
+	e.dispatch(vkLCtrl, true, false)
+	e.dispatch(vkLShft, true, false)
+	if e.dispatch(vkE, true, false) {
+		t.Fatal("Ctrl+Shift+E should not fire a Ctrl+E rule")
+	}
+	e.dispatch(vkE, false, true)
+	e.dispatch(vkLShft, false, true)
+	e.dispatch(vkLCtrl, false, true)
+
+	e.dispatch(vkRCtrl, true, false)
+	if !e.dispatch(vkE, true, false) {
+		t.Fatal("right Ctrl+E should fire a Ctrl+E rule")
+	}
+	e.dispatch(vkE, false, true)
+	e.dispatch(vkRCtrl, false, true)
+}
+
+// A plain rule keeps firing with modifiers held (as before modifiers existed), but a rule naming exactly the held modifiers wins over it.
+func TestExactModifierRuleWinsOverPlain(t *testing.T) {
+	e, _, _ := newTest(t)
+	e.SetMaster(true)
+	plain := modRule(vkE, 0, config.ModeHold)
+	ctrl := modRule(vkE, config.ModCtrl, config.ModeHold)
+	e.SetRules([]*config.Rule{plain, ctrl})
+
+	e.dispatch(vkLShft, true, false)
+	if !e.dispatch(vkE, true, false) {
+		t.Fatal("Shift+E should fall back to the plain rule")
+	}
+	if !isRunning(e, plain) || isRunning(e, ctrl) {
+		t.Fatal("Shift+E should run the plain rule only")
+	}
+	e.dispatch(vkE, false, true)
+	e.dispatch(vkLShft, false, true)
+
+	e.dispatch(vkLCtrl, true, false)
+	e.dispatch(vkE, true, false)
+	if !isRunning(e, ctrl) || isRunning(e, plain) {
+		t.Fatal("Ctrl+E should run the Ctrl rule only")
+	}
+	e.dispatch(vkE, false, true)
+	e.dispatch(vkLCtrl, false, true)
+}
+
+func isRunning(e *Engine, r *config.Rule) bool {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return e.isRepeatingLocked(r)
+}
+
+// In toggle mode the user may let go of Ctrl after starting; each pulse then presses Ctrl around E itself, so the output is still Ctrl+E, and Ctrl is never left down.
+func TestToggleSendsMissingModifiers(t *testing.T) {
+	e, _, _ := newTest(t)
+	rec := &recOut{first: make(chan struct{}), outVK: vkE}
+	e.output = rec.fire
+	e.SetMaster(true)
+	r := modRule(vkE, config.ModCtrl, config.ModeToggle)
+	r.IntervalMs = 1
+	e.SetRules([]*config.Rule{r})
+
+	e.dispatch(vkLCtrl, true, false)
+	e.dispatch(vkE, true, false) // starts repeating; the first pulse may still see Ctrl held
+	e.dispatch(vkE, false, true)
+	e.dispatch(vkLCtrl, false, true) // the user lets go of Ctrl; the toggle keeps running
+	<-rec.first
+
+	// Every pulse that starts from here on has no Ctrl held, so it must carry its own.
+	mark := len(rec.snapshot())
+	deadline := time.Now().Add(2 * time.Second)
+	for {
+		if ev := rec.snapshot()[mark:]; strings.Count(strings.Join(ev, ","), "45 up") >= 2 || time.Now().After(deadline) {
+			break
+		}
+		time.Sleep(5 * time.Millisecond)
+	}
+	e.SetRules(nil) // stop the worker
+	time.Sleep(50 * time.Millisecond)
+
+	all := rec.snapshot()
+	tail := strings.Join(all[mark:], ",")
+	if !strings.Contains(tail, "11 down,45 down,45 up,11 up") {
+		t.Fatalf("a pulse after Ctrl was released should be Ctrl down, E down, E up, Ctrl up: %v", all[mark:])
+	}
+	if strings.Count(strings.Join(all, ","), "11 down") != strings.Count(strings.Join(all, ","), "11 up") {
+		t.Fatalf("every injected Ctrl down needs its up: %v", all)
+	}
+}
+
+// With Ctrl physically held the worker sends E alone: the user's Ctrl already makes it Ctrl+E, and injecting Ctrl up would release it under them.
+func TestHeldModifierIsNotInjected(t *testing.T) {
+	e, _, _ := newTest(t)
+	rec := &recOut{first: make(chan struct{}), outVK: vkE}
+	e.output = rec.fire
+	e.SetMaster(true)
+	e.SetRules([]*config.Rule{modRule(vkE, config.ModCtrl, config.ModeHold)})
+
+	e.dispatch(vkLCtrl, true, false)
+	e.dispatch(vkE, true, false)
+	<-rec.first
+	e.dispatch(vkE, false, true)
+	e.dispatch(vkLCtrl, false, true)
+	for _, x := range rec.snapshot() {
+		if x == "11 down" || x == "11 up" {
+			t.Fatalf("held Ctrl must not be injected: %v", rec.snapshot())
+		}
 	}
 }

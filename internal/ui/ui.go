@@ -89,7 +89,7 @@ func (m *ruleModel) Value(row, col int) interface{} {
 	case 0:
 		return r.Name
 	case 1:
-		return keys.Name(r.TriggerVK)
+		return r.Modifiers.Prefix() + keys.Name(r.TriggerVK)
 	case 2:
 		if r.OutputVK == 0 {
 			return i18n.T("output.same")
@@ -125,6 +125,7 @@ type mainWindow struct {
 	leTargets   *walk.LineEdit
 	leName      *walk.LineEdit
 	cbTrigger  *walk.ComboBox
+	cbMods     [4]*walk.CheckBox // Ctrl, Shift, Alt, Win, in editorMods order
 	cbOutput   *walk.ComboBox
 	cbMode     *walk.ComboBox
 	neInterval *walk.NumberEdit
@@ -348,6 +349,9 @@ func (mw *mainWindow) onMasterToggled() {
 	mw.applyMaster(mw.cbMaster.Checked())
 }
 
+// editorMods is the order of the modifier checkboxes beside the trigger key.
+var editorMods = [4]config.Mods{config.ModCtrl, config.ModShift, config.ModAlt, config.ModWin}
+
 // editorRule builds a rule from the editor fields, or (nil,false) if invalid.
 func (mw *mainWindow) editorRule() (*config.Rule, bool) {
 	tvk, ok := keys.VK(mw.cbTrigger.Text())
@@ -366,9 +370,16 @@ func (mw *mainWindow) editorRule() (*config.Rule, bool) {
 	if interval < 1 {
 		interval = 1
 	}
+	var mods config.Mods
+	for i, cb := range mw.cbMods {
+		if cb.Checked() {
+			mods |= editorMods[i]
+		}
+	}
 	return &config.Rule{
 		Name:       mw.leName.Text(),
 		TriggerVK:  tvk,
+		Modifiers:  mods,
 		OutputVK:   ovk,
 		Mode:       mode,
 		IntervalMs: interval,
@@ -376,11 +387,10 @@ func (mw *mainWindow) editorRule() (*config.Rule, bool) {
 	}, true
 }
 
-// triggerConflict reports whether another rule (other than the one at except)
-// already uses the trigger key vk.
-func (mw *mainWindow) triggerConflict(vk uint16, except int) bool {
+// triggerConflict reports whether another rule (other than the one at except) already uses the trigger key vk with the same modifiers; the same key with different modifiers (E and Ctrl+E) is a different trigger.
+func (mw *mainWindow) triggerConflict(vk uint16, mods config.Mods, except int) bool {
 	for i, r := range mw.model.rules {
-		if i != except && r.TriggerVK == vk {
+		if i != except && r.TriggerVK == vk && r.Modifiers == mods {
 			return true
 		}
 	}
@@ -392,7 +402,7 @@ func (mw *mainWindow) onAdd() {
 	if !ok {
 		return
 	}
-	if mw.triggerConflict(r.TriggerVK, -1) {
+	if mw.triggerConflict(r.TriggerVK, r.Modifiers, -1) {
 		walk.MsgBox(mw, "TurboKey", i18n.T("msg.dupTrigger"), walk.MsgBoxIconWarning)
 		return
 	}
@@ -412,7 +422,7 @@ func (mw *mainWindow) onUpdate() {
 	if !ok {
 		return
 	}
-	if mw.triggerConflict(r.TriggerVK, i) {
+	if mw.triggerConflict(r.TriggerVK, r.Modifiers, i) {
 		walk.MsgBox(mw, "TurboKey", i18n.T("msg.dupTrigger"), walk.MsgBoxIconWarning)
 		return
 	}
@@ -446,6 +456,9 @@ func (mw *mainWindow) onRuleSelected() {
 	mw.leName.SetText(r.Name)
 	if idx := keys.Index(r.TriggerVK); idx >= 0 {
 		mw.cbTrigger.SetCurrentIndex(idx)
+	}
+	for i, cb := range mw.cbMods {
+		cb.SetChecked(r.Modifiers&editorMods[i] != 0)
 	}
 	if r.OutputVK == 0 {
 		mw.cbOutput.SetCurrentIndex(0)
@@ -756,7 +769,7 @@ func Run(eng *engine.Engine, cfg *config.File) error {
 				AssignTo: &mw.tv,
 				Columns: []TableViewColumn{
 					{Title: i18n.T("col.name"), Width: 84},
-					{Title: i18n.T("col.trigger"), Width: 52},
+					{Title: i18n.T("col.trigger"), Width: 84},
 					{Title: i18n.T("col.output"), Width: 72},
 					{Title: i18n.T("col.mode"), Width: 50},
 					{Title: i18n.T("col.interval"), Width: 52},
@@ -772,7 +785,17 @@ func Run(eng *engine.Engine, cfg *config.File) error {
 					Label{Text: i18n.T("lbl.name")},
 					LineEdit{AssignTo: &mw.leName, MaxLength: 20},
 					Label{Text: i18n.T("lbl.trigger")},
-					ComboBox{AssignTo: &mw.cbTrigger, Model: keys.Names},
+					// The trigger key and the modifiers that must be held with it; the modifier names are keycap labels, the same in every language.
+					Composite{
+						Layout: HBox{Spacing: 6, MarginsZero: true},
+						Children: []Widget{
+							ComboBox{AssignTo: &mw.cbTrigger, Model: keys.Names},
+							CheckBox{AssignTo: &mw.cbMods[0], Text: "Ctrl"},
+							CheckBox{AssignTo: &mw.cbMods[1], Text: "Shift"},
+							CheckBox{AssignTo: &mw.cbMods[2], Text: "Alt"},
+							CheckBox{AssignTo: &mw.cbMods[3], Text: "Win"},
+						},
+					},
 					Label{Text: i18n.T("lbl.output")},
 					ComboBox{AssignTo: &mw.cbOutput, Model: outputNames},
 					Label{Text: i18n.T("lbl.mode")},

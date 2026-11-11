@@ -108,6 +108,7 @@ internal/buildinfo/ 构建版本号，由 -ldflags 注入
 
 - `output: ""` 表示「与触发键相同」。
 - `mode`：`"hold"` 或 `"toggle"`。
+- `modifiers`（可选）：需要与触发键同时按住的修饰键，例如 `["Ctrl"]`：按 `Ctrl+E` 会连发，单按 `E` 照常输入。
 - 按键名：`A`–`Z`、`0`–`9`、`F1`–`F12`、`Space`、`Enter`、`Esc`、`Tab`、`↑ ↓ ← →`、`Ctrl`、`Alt`、`Shift`，以及鼠标按钮 `Mouse Left`、`Mouse Right`、`Mouse Mid`、`Mouse X1`、`Mouse X2`。（这些是语言无关标识符，不会被翻译，切换 UI 语言后配置依然有效。）
 
 ## 限定特定程序

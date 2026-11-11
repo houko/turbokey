@@ -5,6 +5,7 @@ package config
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -134,5 +135,46 @@ func TestMissingFileIsEmpty(t *testing.T) {
 	}
 	if out == nil || len(out.Rules) != 0 {
 		t.Errorf("expected empty config, got %+v", out)
+	}
+}
+
+func TestModifiersRoundTrip(t *testing.T) {
+	p := filepath.Join(t.TempDir(), "config.json")
+	in := &File{Rules: []*Rule{
+		{Name: "combo", TriggerVK: 0x45, Modifiers: ModCtrl | ModShift, Mode: ModeHold, IntervalMs: 20, Enabled: true},
+		{Name: "plain", TriggerVK: 0x45, Mode: ModeHold, IntervalMs: 20, Enabled: true},
+	}}
+	if err := saveTo(p, in); err != nil {
+		t.Fatal(err)
+	}
+	data, err := os.ReadFile(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(data), `"modifiers": [`) || strings.Count(string(data), `"modifiers"`) != 1 {
+		t.Errorf("modifiers should be written for the combo rule only:\n%s", data)
+	}
+	out, err := loadFrom(p)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := out.Rules[0].Modifiers; got != ModCtrl|ModShift {
+		t.Errorf("combo modifiers = %v", got.Names())
+	}
+	if got := out.Rules[1].Modifiers; got != 0 {
+		t.Errorf("plain modifiers = %v", got.Names())
+	}
+}
+
+func TestParseModsAndPrefix(t *testing.T) {
+	m := ParseMods([]string{"shift", " CTRL ", "Bogus", "win"})
+	if m != ModCtrl|ModShift|ModWin {
+		t.Fatalf("ParseMods = %v", m.Names())
+	}
+	if got := m.Prefix(); got != "Ctrl+Shift+Win+" {
+		t.Errorf("Prefix = %q", got)
+	}
+	if Mods(0).Prefix() != "" {
+		t.Error("no modifiers should have an empty prefix")
 	}
 }

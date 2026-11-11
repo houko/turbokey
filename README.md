@@ -38,6 +38,7 @@ to `main` auto-builds and publishes a new versioned release via GitHub Actions.
 - Two modes per rule:
   - **Hold** — repeats while the trigger key is physically held down.
   - **Toggle** — one press starts repeating, the next press stops.
+- Optional **modifier combinations**: tick Ctrl, Shift, Alt or Win beside the trigger and the rule fires only with exactly those held (`Ctrl+E` repeats `Ctrl+E`, while `E` alone types normally). The same key can have a plain rule and combination rules side by side; the combination that matches wins.
 - Global master switch with an **F8** hotkey.
 - Optionally limit rapid-fire to specific apps (matched by process name); empty
   means it works everywhere.
@@ -131,13 +132,15 @@ Notes:
 {
   "rules": [
     { "name": "attack", "trigger": "J", "output": "", "mode": "hold",   "interval": 10, "enabled": true },
-    { "name": "skill",  "trigger": "K", "output": "", "mode": "toggle", "interval": 50, "enabled": false }
+    { "name": "skill",  "trigger": "K", "output": "", "mode": "toggle", "interval": 50, "enabled": false },
+    { "name": "combo",  "trigger": "E", "modifiers": ["Ctrl"], "output": "", "mode": "hold", "interval": 30, "enabled": true }
   ]
 }
 ```
 
 - `output: ""` means "same as the trigger key".
 - `mode`: `"hold"` or `"toggle"`.
+- `modifiers` (optional): the modifier keys that must be held with the trigger, any of `"Ctrl"`, `"Shift"`, `"Alt"`, `"Win"`. With `["Ctrl"]` on `E`, `Ctrl+E` repeats `Ctrl+E` (in toggle mode the tool presses Ctrl itself once you let go) and `E` alone types normally. Left and right modifiers count the same.
 - Key names: `A`–`Z`, `0`–`9`, `F1`–`F12`, `Space`, `Enter`, `Esc`, `Tab`,
   `↑ ↓ ← →`, `Ctrl`, `Alt`, `Shift`, and mouse buttons `Mouse Left`, `Mouse Right`,
   `Mouse Mid`, `Mouse X1`, `Mouse X2`. (These are language-neutral identifiers and

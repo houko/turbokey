@@ -108,6 +108,7 @@ Notas:
 
 - `output: ""` significa "igual que la tecla de activación".
 - `mode`: `"hold"` o `"toggle"`.
+- `modifiers` (opcional): teclas modificadoras que deben mantenerse con la tecla de disparo, p. ej. `["Ctrl"]`: `Ctrl+E` se repite y `E` sola escribe con normalidad.
 - Nombres de teclas: `A`–`Z`, `0`–`9`, `F1`–`F12`, `Space`, `Enter`, `Esc`, `Tab`, `↑ ↓ ← →`, `Ctrl`, `Alt`, `Shift` y botones del ratón `Mouse Left`, `Mouse Right`, `Mouse Mid`, `Mouse X1`, `Mouse X2`. (Son identificadores neutros respecto al idioma y no se traducen, así que la configuración sigue siendo válida entre idiomas de la UI.)
 
 ## Limitar a apps concretas

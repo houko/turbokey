@@ -108,6 +108,7 @@ internal/buildinfo/ ビルドバージョン、-ldflags で注入
 
 - `output: ""` は「トリガーキーと同じ」の意味。
 - `mode`:`"hold"` または `"toggle"`。
+- `modifiers`（任意）：トリガーキーと一緒に押している必要がある修飾キー。例：`["Ctrl"]` なら `Ctrl+E` で連打し、`E` 単独では通常どおり入力されます。
 - キー名:`A`–`Z`、`0`–`9`、`F1`–`F12`、`Space`、`Enter`、`Esc`、`Tab`、`↑ ↓ ← →`、`Ctrl`、`Alt`、`Shift`、およびマウスボタン `Mouse Left`、`Mouse Right`、`Mouse Mid`、`Mouse X1`、`Mouse X2`。(これらは言語非依存の識別子なので翻訳されません。UI 言語を切り替えても設定は有効のままです。)
 
 ## 特定のアプリに限定する
