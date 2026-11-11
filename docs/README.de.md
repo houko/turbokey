@@ -108,6 +108,7 @@ Hinweise:
 
 - `output: ""` bedeutet „wie die Auslösetaste“.
 - `mode`: `"hold"` oder `"toggle"`.
+- `modifiers` (optional): Zusatztasten, die mit der Auslösetaste gehalten werden müssen, z. B. `["Ctrl"]` – dann wiederholt `Ctrl+E`, während `E` allein normal tippt.
 - Tastennamen: `A`–`Z`, `0`–`9`, `F1`–`F12`, `Space`, `Enter`, `Esc`, `Tab`, `↑ ↓ ← →`, `Ctrl`, `Alt`, `Shift` sowie Maustasten `Mouse Left`, `Mouse Right`, `Mouse Mid`, `Mouse X1`, `Mouse X2`. (Das sind sprachneutrale Bezeichner, die nicht übersetzt werden, sodass die Konfiguration über UI-Sprachen hinweg gültig bleibt.)
 
 ## Auf bestimmte Apps beschränken

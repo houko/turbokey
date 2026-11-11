@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"turbokey/internal/keys"
 )
@@ -22,10 +23,61 @@ const (
 	ModeToggle
 )
 
+// Mods is a set of modifier keys (Ctrl, Shift, Alt, Win), left and right alike.
+type Mods uint8
+
+const (
+	ModCtrl Mods = 1 << iota
+	ModShift
+	ModAlt
+	ModWin
+)
+
+// modOrder is the order modifiers are shown and persisted in, as on a keycap combination ("Ctrl+Shift+E").
+var modOrder = []struct {
+	mod  Mods
+	name string
+}{{ModCtrl, "Ctrl"}, {ModShift, "Shift"}, {ModAlt, "Alt"}, {ModWin, "Win"}}
+
+// Names returns the modifiers in the set, in display order.
+func (m Mods) Names() []string {
+	var out []string
+	for _, o := range modOrder {
+		if m&o.mod != 0 {
+			out = append(out, o.name)
+		}
+	}
+	return out
+}
+
+// Prefix returns the modifiers as a combination prefix, e.g. "Ctrl+Shift+", or "" for none.
+func (m Mods) Prefix() string {
+	s := ""
+	for _, n := range m.Names() {
+		s += n + "+"
+	}
+	return s
+}
+
+// ParseMods converts modifier names (case-insensitive) to a set, ignoring unknown names.
+func ParseMods(names []string) Mods {
+	var m Mods
+	for _, n := range names {
+		for _, o := range modOrder {
+			if strings.EqualFold(strings.TrimSpace(n), o.name) {
+				m |= o.mod
+			}
+		}
+	}
+	return m
+}
+
 // Rule is a single rapid-fire binding (runtime form, keyed by VK code).
 type Rule struct {
-	Name       string
-	TriggerVK  uint16
+	Name      string
+	TriggerVK uint16
+	// Modifiers, when not empty, are the modifier keys that must be held, exactly, for the trigger to fire (Ctrl+E fires, E alone and Ctrl+Shift+E do not). A rule without modifiers fires whatever modifiers are held, unless another rule for the same key names exactly the ones held.
+	Modifiers  Mods
 	OutputVK   uint16 // 0 means: same as TriggerVK
 	Mode       Mode
 	IntervalMs int
@@ -67,12 +119,13 @@ func (f *File) ResolvedMasterHotkey() uint16 {
 // --- JSON serialization (human-readable, keyed by key name) ---
 
 type ruleDTO struct {
-	Name     string `json:"name"`
-	Trigger  string `json:"trigger"`
-	Output   string `json:"output"` // "" => same as trigger
-	Mode     string `json:"mode"`   // "hold" | "toggle"
-	Interval int    `json:"interval"`
-	Enabled  bool   `json:"enabled"`
+	Name      string   `json:"name"`
+	Trigger   string   `json:"trigger"`
+	Modifiers []string `json:"modifiers,omitempty"` // e.g. ["Ctrl"]; omitted = none
+	Output    string   `json:"output"`              // "" => same as trigger
+	Mode      string   `json:"mode"`                // "hold" | "toggle"
+	Interval  int      `json:"interval"`
+	Enabled   bool     `json:"enabled"`
 }
 
 type configDTO struct {
@@ -132,6 +185,7 @@ func loadFrom(p string) (*File, error) {
 		rules = append(rules, &Rule{
 			Name:       d.Name,
 			TriggerVK:  tvk,
+			Modifiers:  ParseMods(d.Modifiers),
 			OutputVK:   ovk,
 			Mode:       mode,
 			IntervalMs: interval,
@@ -153,12 +207,13 @@ func saveTo(p string, f *File) error {
 			mode = "toggle"
 		}
 		dto.Rules = append(dto.Rules, ruleDTO{
-			Name:     r.Name,
-			Trigger:  keys.Name(r.TriggerVK),
-			Output:   out,
-			Mode:     mode,
-			Interval: r.IntervalMs,
-			Enabled:  r.Enabled,
+			Name:      r.Name,
+			Trigger:   keys.Name(r.TriggerVK),
+			Modifiers: r.Modifiers.Names(),
+			Output:    out,
+			Mode:      mode,
+			Interval:  r.IntervalMs,
+			Enabled:   r.Enabled,
 		})
 	}
 	data, err := json.MarshalIndent(dto, "", "  ")

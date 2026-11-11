@@ -108,6 +108,7 @@ internal/buildinfo/ 빌드 버전, -ldflags로 주입
 
 - `output: ""`는 "트리거 키와 동일"을 의미합니다.
 - `mode`: `"hold"` 또는 `"toggle"`.
+- `modifiers`(선택): 트리거 키와 함께 눌러야 하는 보조 키. 예: `["Ctrl"]`이면 `Ctrl+E`는 연사되고 `E`만 누르면 평소처럼 입력됩니다.
 - 키 이름: `A`–`Z`, `0`–`9`, `F1`–`F12`, `Space`, `Enter`, `Esc`, `Tab`, `↑ ↓ ← →`, `Ctrl`, `Alt`, `Shift`, 그리고 마우스 버튼 `Mouse Left`, `Mouse Right`, `Mouse Mid`, `Mouse X1`, `Mouse X2`. (이들은 언어 중립 식별자이며 번역되지 않으므로, UI 언어를 바꿔도 설정이 유효합니다.)
 
 ## 특정 앱으로 제한
